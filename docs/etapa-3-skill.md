@@ -104,6 +104,8 @@ validação em uso, que é a [etapa 4.6](etapa-4-testes.md) — por ser comporta
 verificação é manual.
 
 - [ ] sem Node instalado → mensagem clara com o comando de instalação, sem tentar instalar sozinha
+- [ ] instalada por pacote (bundle ao lado do SKILL.md) → consulta sem compilar nada
+- [ ] pedido de atualização → compara a versão instalada com a publicada antes de baixar
 - [ ] skill acionada por pedido em linguagem natural com uma ou mais chaves
 - [ ] chaves em formatos variados (corridas, espaçadas, uma por linha) reconhecidas
 - [ ] primeira execução avisa o usuário **antes** de compilar

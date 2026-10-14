@@ -57,11 +57,18 @@ Extratores: [GetDanfeCompany.ts](../cli/src/ExtractNfeData/GetDanfeCompany.ts),
 A skill está em [.claude/skills/notas-fiscais/SKILL.md](../.claude/skills/notas-fiscais/SKILL.md),
 invocável como `/notas-fiscais`; o `skill.md` da raiz é só um ponteiro para ela.
 
+**Distribuição.** `cd cli && npm run package` gera
+[skill-dist/notas-fiscais/](../skill-dist/notas-fiscais/): SKILL.md mais a CLI inteira num único
+arquivo JavaScript de ~950 KB, com as dependências embutidas. Quem recebe copia a pasta para
+`~/.claude/skills/` e não roda mais nada — sem npm, sem build, sem git. O pacote é reprodutível
+byte a byte, então o SHA-256 anotado no `LEIA-ME.md` pode ser conferido contra o código-fonte
+público. Ver [instalacao-skill.md](instalacao-skill.md).
+
 - As fixtures de HTML estão em [cli/test/fixtures/](../cli/test/fixtures/), nomeadas pela chave
   DANFE: 6 arquivos, todos do RS — 5 notas válidas (de 1 a 22 itens, supermercado e farmácia) e 1
   de nota inexistente.
 - `joi` e `dotenv` instalados; scripts `build`, `build:watch` e `start` no `package.json`.
-- Suíte com **129 testes** em `cli/test/`, rodando sem internet contra um servidor HTTP falso:
+- Suíte com **132 testes** em `cli/test/`, rodando sem internet contra um servidor HTTP falso:
   `cd cli && npm test` (type-check → build → jest). A consulta real ao SEFAZ fica atrás de
   `npm run test:e2e`. Não há linter configurado.
 - Para instalar numa máquina nova: [instalacao-skill.md](instalacao-skill.md).

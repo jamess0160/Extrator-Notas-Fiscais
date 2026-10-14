@@ -60,6 +60,10 @@ describe("conformidade da CLI com o contrato", () => {
         await fake.close()
     })
 
+    beforeEach(() => {
+        fake.reset()
+    })
+
     it("sai com 0 e JSON parseável mesmo com falhas parciais", async () => {
         const { code, stdout } = await runCli(fake, [
             KEYS.farmacia,
@@ -81,6 +85,42 @@ describe("conformidade da CLI com o contrato", () => {
 
         expect(code).toBe(0)
         expect((JSON.parse(stdout) as BatchResult).Success).toBe(0)
+    })
+
+    describe("opções de linha de comando", () => {
+
+        /**
+         * As duas únicas invocações em que o stdout não leva JSON. É o que permite à skill comparar
+         * a versão instalada com a publicada — sem isso, ninguém descobre que está desatualizado.
+         */
+        it("imprime a versão e sai com 0", async () => {
+            for (const flag of ["--version", "-v"]) {
+                const { code, stdout } = await runCli(fake, [flag])
+
+                expect(code).toBe(0)
+                expect(stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/)
+                expect(fake.requests).toHaveLength(0)
+            }
+        })
+
+        it("imprime a ajuda e sai com 0", async () => {
+            const { code, stdout } = await runCli(fake, ["--help"])
+
+            expect(code).toBe(0)
+            expect(stdout).toContain("Uso:")
+            expect(stdout).toContain("--version")
+            expect(fake.requests).toHaveLength(0)
+        })
+
+        /** Sem isso uma flag errada era tratada como chave e virava INVALID_LENGTH. */
+        it("recusa opção desconhecida em vez de tratá-la como chave", async () => {
+            const { code, stdout, stderr } = await runCli(fake, ["--nope", KEYS.farmacia])
+
+            expect(code).toBe(1)
+            expect(stdout).toBe("")
+            expect(stderr).toContain("Opção desconhecida")
+            expect(fake.requests).toHaveLength(0)
+        })
     })
 
     it("sai com 1 e mostra o uso quando não recebe chave", async () => {

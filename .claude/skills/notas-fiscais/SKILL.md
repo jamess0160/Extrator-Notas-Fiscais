@@ -11,7 +11,7 @@ entrega os dados; **a análise é sua** — é ela o valor do produto.
 Divisão de trabalho, para não duplicar esforço: a CLI valida as chaves, chama o SEFAZ, interpreta o
 HTML e devolve JSON. Você não valida chave, não monta requisição e não lê HTML.
 
-## Passo 0 — Verificar o Node e localizar a CLI
+## Passo 0 — Verificar o Node
 
 Antes de qualquer coisa, rode `node --version`.
 
@@ -35,16 +35,33 @@ Guia completo em `<projeto>/docs/instalacao-skill.md`.
 
 ## Localizar a CLI
 
-Resolva o diretório do projeto nesta ordem e use o primeiro que existir:
+Use o **primeiro** caminho que existir:
 
-1. `$EXTRATOR_NFE_HOME` (ou `$env:EXTRATOR_NFE_HOME` no PowerShell), se estiver definida — é como a
-   skill é instalada globalmente;
-2. a raiz do repositório atual, se ela tiver uma pasta `cli/`.
+1. `notas-fiscais.cjs` na mesma pasta deste SKILL.md — é a instalação por pacote: a CLI inteira num
+   arquivo só, sem `node_modules` e sem compilação. Rode `node <pasta-da-skill>/notas-fiscais.cjs`;
+2. `$EXTRATOR_NFE_HOME/cli/dist/index.js`, se a variável estiver definida;
+3. `cli/dist/index.js` a partir da raiz do repositório atual, se ele tiver uma pasta `cli/`.
 
-Daqui em diante, `<projeto>` é esse diretório e todos os comandos rodam a partir dele. Se nenhum
-dos dois existir, diga ao usuário que a skill não encontrou o projeto e aponte o guia de
-instalação (`docs/instalacao-skill.md`) — não tente adivinhar o caminho nem instalar nada fora
-dele.
+Daqui em diante `<cli>` é o caminho encontrado. **No caso 1 não há nada a instalar nem a compilar** —
+pule o passo de setup e vá direto para a consulta. Os casos 2 e 3 são o desenvolvimento a partir do
+código-fonte, e aí o setup do passo seguinte se aplica.
+
+Se nenhum existir, diga que a skill não encontrou a CLI e aponte o `LEIA-ME.md` da pasta da skill
+(instalação por pacote) ou `docs/instalacao-skill.md` (instalação a partir do código-fonte). Não
+tente adivinhar caminho nem baixar nada por iniciativa própria.
+
+### Quando o usuário pedir para atualizar
+
+Só no caso 1, e só se ele pedir. Compare a versão instalada com a publicada:
+
+```bash
+node <cli> --version
+curl -s https://github.com/jamess0160/Extrator-Notas-Fiscais/raw/main/skill-dist/notas-fiscais/VERSION
+```
+
+Se a publicada for mais nova, baixe os dois arquivos que mudam, na pasta da skill:
+`notas-fiscais.cjs` e `SKILL.md`, da mesma URL base. Nos casos 2 e 3, atualizar é `git pull` e
+`npm run build`.
 
 ## Passo 1 — Extrair as chaves da mensagem
 
@@ -57,7 +74,10 @@ Nenhuma chave reconhecida → peça as chaves ao usuário e **não** chame a CLI
 Não descarte uma chave que pareça errada: passe para a CLI e deixe que ela devolva o código de
 erro. A validação é dela.
 
-## Passo 2 — Garantir que a CLI está compilada
+## Passo 2 — Compilar, apenas na instalação a partir do código-fonte
+
+**Só vale para os casos 2 e 3 da seção anterior.** Na instalação por pacote (caso 1) não há o que
+compilar: pule para o passo 3.
 
 Verifique se `<projeto>/cli/dist/index.js` existe.
 
@@ -84,14 +104,14 @@ nota não encontrada: são problemas de natureza diferente e o usuário precisa 
 Uma única chamada com todas as chaves:
 
 ```bash
-node <projeto>/cli/dist/index.js <chave1> <chave2> ...
+node <cli> <chave1> <chave2> ...
 ```
 
 - Acima de **150 chaves**, divida em chamadas sucessivas e junte os `Results`.
 - **exit 0** → faça `JSON.parse` do stdout. Vale inclusive quando todas as chaves falharam.
 - **exit 1** → falha da ferramenta. Mostre o stderr e pare; não tente adivinhar o resultado.
 
-O stdout é exclusivamente JSON; o progresso vai para o stderr. O formato está em `<projeto>/docs/contrato-io.md`:
+O stdout é exclusivamente JSON; o progresso vai para o stderr. O formato é este:
 
 ```json
 { "Total": 2, "Success": 1, "Failed": 1, "Results": [
@@ -147,7 +167,7 @@ produto inteiro antes de decidir — `ESPONJA SCOTCH-BRITE NAO RISCA LARANJA 3` 
 
 ## Passo 5 — Analisar
 
-Detalhes em `<projeto>/docs/analise-financeira.md` — a taxonomia acima já é suficiente para
+Detalhes em `docs/analise-financeira.md` do repositório — a taxonomia acima já é suficiente para
 classificar; leia o documento quando precisar do restante. O essencial:
 
 **Base de cálculo.** Totais por categoria somam `Items[].TotalValue`; o total da nota é `Value`, o

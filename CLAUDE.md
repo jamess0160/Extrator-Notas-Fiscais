@@ -15,6 +15,13 @@ All source lives in [cli/](cli/). There is no repository-level package; run buil
 `cli/`. The skill itself is [.claude/skills/notas-fiscais/SKILL.md](.claude/skills/notas-fiscais/SKILL.md)
 (invoked as `/notas-fiscais`); the root `skill.md` is only a pointer to it.
 
+**Two distribution shapes, and the skill handles both.** `npm run package` bundles the whole CLI
+into one dependency-free `.cjs` that ships next to the SKILL.md in
+[skill-dist/notas-fiscais/](skill-dist/notas-fiscais/) — recipients copy that folder into
+`~/.claude/skills/` and run nothing. Working from source keeps `cli/dist/index.js`. SKILL.md
+resolves the bundle beside itself first, then `$EXTRATOR_NFE_HOME`, then a repo-local `cli/`; the
+build-on-first-run flow applies only to the last two.
+
 ## Read this first
 
 [docs/](docs/) is the plan of record. Before changing
@@ -52,6 +59,7 @@ node cli/dist/index.js <chave44> [<chave44> ...]
 ```
 
 ```bash
+npm run package                 # esbuild bundle + SKILL.md + VERSION + LEIA-ME -> skill-dist/
 npm test                        # typecheck -> build -> jest, no internet needed
 npx jest test/unit              # one directory
 npx jest -t "soma todas as"     # one test by name
@@ -61,6 +69,14 @@ npm run test:e2e                # adds the real SEFAZ query (sets RUN_E2E=1)
 `npm test` chains the build because [test/integration/cli.test.ts](cli/test/integration/cli.test.ts)
 runs the **compiled** CLI as a subprocess — without it a stale `dist/` would pass green. There is no
 linter or formatter.
+
+`skill-dist/` is generated **and committed**: the committed copy is what makes `curl`-based updates
+work with no release infrastructure, and `scripts/package.js` warns when the working tree is dirty
+because the commit it stamps into `LEIA-ME.md` would then not describe the package. The bundle is
+byte-for-byte reproducible, which is what makes the stamped SHA-256 verifiable. The version is
+injected at bundle time via esbuild `--define:__NF_VERSION__`; outside the bundle
+[version.ts](cli/src/version.ts) falls back to reading `package.json`, and `typeof` on the
+undeclared global is what keeps both paths working.
 
 Tests are transformed by `@swc/jest`, not `ts-jest`: TypeScript 7 is the native compiler and its npm
 package no longer exposes the JavaScript API (`require("typescript")` yields only
