@@ -30,7 +30,9 @@ describe("ExtractNfeData contra o servidor falso", () => {
         expect(result).toEqual({
             Danfe: KEYS.farmacia,
             Valid: true,
+            Cnpj: "88212113025439",
             Company: "COMERCIO DE MEDICAMENTOS BRAIR LTDA",
+            TradeName: null,
             Date: "2025-10-31T12:56:53",
             Value: 19.9,
             Items: [{
@@ -129,6 +131,75 @@ describe("ExtractNfeData contra o servidor falso", () => {
             expect(JSON.stringify(result)).not.toContain("Ã")
             expect(result.Items.map((item) => item.Description).join(" ")).not.toContain("Ã")
         }
+    })
+
+    describe("nome fantasia", () => {
+
+        it("traz o nome fantasia do CNPJ do emitente", async () => {
+            const result = await new ExtractNfeData().run(KEYS.alimentos3)
+
+            expect(result.Valid && result.Cnpj).toBe("11578660000170")
+            expect(result.Valid && result.TradeName).toBe("MINI KALZONE")
+            expect(fake.cnpjRequests).toEqual(["11578660000170"])
+        })
+
+        it("extrai o CNPJ da página, e ele coincide com o embutido na chave", async () => {
+            const result = await new ExtractNfeData().run(KEYS.mercado22)
+
+            expect(result.Valid && result.Cnpj).toBe(KEYS.mercado22.slice(6, 20))
+        })
+
+        /**
+         * Cadastro sem nome fantasia é comum em LTDA, e nessa situação o campo tem de ficar `null`
+         * para a apresentação cair na razão social — não virar string vazia.
+         */
+        it("devolve null quando o cadastro não tem fantasia", async () => {
+            fake.cnpjMode = "vazio"
+
+            const result = await new ExtractNfeData().run(KEYS.alimentos3)
+
+            expect(result.Valid && result.TradeName).toBeNull()
+        })
+
+        it.each(["404", "500"] as const)("não invalida a nota quando a consulta falha com %s", async (cnpjMode) => {
+            fake.cnpjMode = cnpjMode
+
+            const result = await new ExtractNfeData().run(KEYS.alimentos3)
+
+            expect(result.Valid).toBe(true)
+            expect(result.Valid && result.TradeName).toBeNull()
+            expect(result.Valid && result.Company).toBe("BPR COMERCIO DE ALIMENTOS EIRELI")
+        })
+
+        it("consulta uma vez por CNPJ, reaproveitando o cache entre notas", async () => {
+            const extractor = new ExtractNfeData()
+
+            // As duas notas do mercado compartilham o mesmo CNPJ.
+            await extractor.run(KEYS.mercado5)
+            await extractor.run(KEYS.mercado22)
+
+            expect(fake.requests).toHaveLength(2)
+            expect(fake.cnpjRequests).toEqual(["21387187000106"])
+        })
+
+        it("não consulta nada com CNPJ_LOOKUP=off", async () => {
+            const anterior = process.env.CNPJ_LOOKUP
+            process.env.CNPJ_LOOKUP = "off"
+
+            try {
+                const result = await new ExtractNfeData().run(KEYS.alimentos3)
+
+                expect(result.Valid && result.TradeName).toBeNull()
+                expect(result.Valid && result.Company).toBe("BPR COMERCIO DE ALIMENTOS EIRELI")
+                expect(fake.cnpjRequests).toHaveLength(0)
+            } finally {
+                if (anterior === undefined) {
+                    delete process.env.CNPJ_LOOKUP
+                } else {
+                    process.env.CNPJ_LOOKUP = anterior
+                }
+            }
+        })
     })
 
     /** Garantia 5 do contrato: chave malformada não gasta requisição. */

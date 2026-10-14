@@ -31,7 +31,16 @@ export interface DanfeFailure {
 export interface DanfeSuccess {
     Danfe: string
     Valid: true
+    /** CNPJ do emitente, 14 dígitos sem pontuação. */
+    Cnpj: string
+    /** Razão social, como impressa na nota. */
     Company: string
+    /**
+     * Nome fantasia do emitente, da Receita Federal. `null` quando o cadastro não tem fantasia ou
+     * a consulta não foi possível — nunca invalida a nota. Para exibição, prefira este campo e
+     * caia em `Company` quando for `null`.
+     */
+    TradeName: string | null
     /** Data de emissão em ISO 8601 local, sem offset: `YYYY-MM-DDTHH:MM:SS`. */
     Date: string
     Value: number

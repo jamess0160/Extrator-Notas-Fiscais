@@ -21,10 +21,15 @@ interface Execution {
  * Roda a CLI **compilada**, como a skill faz. Não é redundante com os testes em processo: só aqui
  * entram argv, exit code e a separação real entre stdout e stderr.
  */
-async function runCli(sefazUrl: string, args: string[]): Promise<Execution> {
+async function runCli(fake: Pick<FakeSefaz, "url" | "cnpjUrl">, args: string[]): Promise<Execution> {
     try {
         const { stdout, stderr } = await run(process.execPath, [CLI, ...args], {
-            env: { ...process.env, SEFAZ_URL: sefazUrl, SEFAZ_TIMEOUT_MS: "5000" },
+            env: {
+                ...process.env,
+                SEFAZ_URL: fake.url,
+                CNPJ_API_URL: fake.cnpjUrl,
+                SEFAZ_TIMEOUT_MS: "5000",
+            },
             maxBuffer: 50 * 1024 * 1024,
         })
 
@@ -56,7 +61,7 @@ describe("conformidade da CLI com o contrato", () => {
     })
 
     it("sai com 0 e JSON parseável mesmo com falhas parciais", async () => {
-        const { code, stdout } = await runCli(fake.url, [
+        const { code, stdout } = await runCli(fake, [
             KEYS.farmacia,
             KEYS.inexistente,
             OUTRA_UF,
@@ -72,14 +77,14 @@ describe("conformidade da CLI com o contrato", () => {
     })
 
     it("sai com 0 mesmo quando todas as chaves falham", async () => {
-        const { code, stdout } = await runCli(fake.url, [KEYS.inexistente, OUTRA_UF])
+        const { code, stdout } = await runCli(fake, [KEYS.inexistente, OUTRA_UF])
 
         expect(code).toBe(0)
         expect((JSON.parse(stdout) as BatchResult).Success).toBe(0)
     })
 
     it("sai com 1 e mostra o uso quando não recebe chave", async () => {
-        const { code, stdout, stderr } = await runCli(fake.url, [])
+        const { code, stdout, stderr } = await runCli(fake, [])
 
         expect(code).toBe(1)
         expect(stdout).toBe("")
@@ -92,7 +97,7 @@ describe("conformidade da CLI com o contrato", () => {
      * quebrar nada aqui dentro.
      */
     it("escreve exclusivamente JSON no stdout, com o progresso no stderr", async () => {
-        const { stdout, stderr } = await runCli(fake.url, [KEYS.farmacia, KEYS.mercado5])
+        const { stdout, stderr } = await runCli(fake, [KEYS.farmacia, KEYS.mercado5])
 
         expect(() => JSON.parse(stdout)).not.toThrow()
         expect(stdout.startsWith("{")).toBe(true)
@@ -101,8 +106,18 @@ describe("conformidade da CLI com o contrato", () => {
         expect(stderr).toContain("consultando")
     })
 
+    it("entrega o nome fantasia consultado pelo CNPJ", async () => {
+        const { stdout } = await runCli(fake, [KEYS.alimentos3])
+
+        const [nota] = (JSON.parse(stdout) as BatchResult).Results
+
+        expect(nota?.Valid === true && nota.Cnpj).toBe("11578660000170")
+        expect(nota?.Valid === true && nota.TradeName).toBe("MINI KALZONE")
+        expect(nota?.Valid === true && nota.Company).toBe("BPR COMERCIO DE ALIMENTOS EIRELI")
+    })
+
     it("entrega a saída campo a campo como o contrato define", async () => {
-        const { stdout } = await runCli(fake.url, [KEYS.farmacia, KEYS.inexistente])
+        const { stdout } = await runCli(fake, [KEYS.farmacia, KEYS.inexistente])
 
         const result = JSON.parse(stdout) as BatchResult
 
@@ -113,7 +128,9 @@ describe("conformidade da CLI com o contrato", () => {
         expect(nota).toEqual({
             Danfe: KEYS.farmacia,
             Valid: true,
+            Cnpj: "88212113025439",
             Company: "COMERCIO DE MEDICAMENTOS BRAIR LTDA",
+            TradeName: null,
             Date: "2025-10-31T12:56:53",
             Value: 19.9,
             Items: [{

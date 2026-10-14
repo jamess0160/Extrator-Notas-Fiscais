@@ -1,9 +1,12 @@
 import { parseFromString } from "dom-parser"
+import { cnpjFromDanfe } from "../cnpj"
+import { CnpjClient } from "../CnpjClient"
 import { failure } from "../errors"
 import { validateDanfe } from "../schema"
 import { SefazClient, SefazFetchError } from "../SefazClient"
 import type { DanfeResult } from "../types"
 import { ExtractItems } from "./ExtractItems"
+import { GetDanfeCnpj } from "./GetDanfeCnpj"
 import { GetDanfeCompany } from "./GetDanfeCompany"
 import { GetDanfeDate } from "./GetDanfeDate"
 import { GetDanfeValue } from "./GetDanfeValue"
@@ -24,8 +27,12 @@ export class ExtractNfeData {
     private readonly GetDanfeValue = new GetDanfeValue()
     private readonly GetDanfeDate = new GetDanfeDate()
     private readonly GetDanfeCompany = new GetDanfeCompany()
+    private readonly GetDanfeCnpj = new GetDanfeCnpj()
 
-    public constructor(private readonly client: SefazClient = new SefazClient()) { }
+    public constructor(
+        private readonly client: SefazClient = new SefazClient(),
+        private readonly cnpjClient: CnpjClient = new CnpjClient(),
+    ) { }
 
     /**
      * Consulta uma chave e devolve o item de `Results` do contrato.
@@ -50,7 +57,18 @@ export class ExtractNfeData {
             return failure(danfe, "FETCH_ERROR", detail)
         }
 
-        return this.extract(danfe, page)
+        const result = this.extract(danfe, page)
+
+        if (result.Valid === false) {
+            return result
+        }
+
+        // Enriquecimento, não extração: a consulta de nome fantasia é um serviço externo e fica
+        // fora do `extract` para que a interpretação do HTML continue sincrona e testável sem rede.
+        return {
+            ...result,
+            TradeName: await this.cnpjClient.tradeName(result.Cnpj),
+        }
     }
 
     /**
@@ -68,7 +86,11 @@ export class ExtractNfeData {
             return {
                 Danfe: danfe,
                 Valid: true,
+                // Página primeiro, chave de acesso como garantia: o CNPJ vive nos dois lugares, e
+                // assim uma mudança no cabeçalho não custa a nota inteira.
+                Cnpj: this.GetDanfeCnpj.run(dom) ?? cnpjFromDanfe(danfe) ?? "",
                 Company: this.GetDanfeCompany.run(dom),
+                TradeName: null,
                 Date: this.GetDanfeDate.run(dom),
                 Value: this.GetDanfeValue.run(dom),
                 Items: this.ExtractItems.run(dom),

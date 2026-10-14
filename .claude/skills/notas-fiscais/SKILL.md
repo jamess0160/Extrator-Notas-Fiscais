@@ -95,11 +95,19 @@ O stdout é exclusivamente JSON; o progresso vai para o stderr. O formato está 
 
 ```json
 { "Total": 2, "Success": 1, "Failed": 1, "Results": [
-  { "Danfe": "4325…", "Valid": true, "Company": "…", "Date": "2025-10-31T12:56:53",
-    "Value": 19.9, "Items": [ { "Description": "…", "Quantity": 1, "UN": "UN",
-    "UnityValue": 23.21, "TotalValue": 23.21 } ] },
+  { "Danfe": "4326…", "Valid": true, "Cnpj": "11578660000170",
+    "Company": "BPR COMERCIO DE ALIMENTOS EIRELI", "TradeName": "MINI KALZONE",
+    "Date": "2026-10-12T14:31:12", "Value": 32.9,
+    "Items": [ { "Description": "…", "Quantity": 1, "UN": "UN",
+    "UnityValue": 12.5, "TotalValue": 12.5 } ] },
   { "Danfe": "4326…", "Valid": false, "Error": { "Code": "NOT_FOUND", "Message": "…" } } ] }
 ```
+
+**Como nomear o estabelecimento:** use `TradeName` (nome fantasia, da Receita Federal) e caia em
+`Company` (razão social) quando ele for `null`. É a diferença entre dizer `MINI KALZONE` e
+`BPR COMERCIO DE ALIMENTOS EIRELI` — o usuário reconhece o primeiro, que é o nome na fachada.
+`null` é comum e não é erro: muitos cadastros não têm fantasia. Não invente nome fantasia, e não
+derive um da razão social.
 
 Cada item de `Results` é união discriminada por `Valid`: só leia `Company`/`Date`/`Value`/`Items`
 depois de confirmar `Valid: true`.

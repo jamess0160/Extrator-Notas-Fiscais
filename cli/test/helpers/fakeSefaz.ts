@@ -13,8 +13,22 @@ export type FakeMode =
     /** Serve a fixture convertida para bytes latin-1, como a página declara ser. */
     | "latin1"
 
+/** Nomes fantasia reais dos CNPJs das fixtures, conferidos na BrasilAPI. */
+export const TRADE_NAMES: Record<string, string> = {
+    "06348488000390": "SUPER CRISAN CHARQUEADAS",
+    "11578660000170": "MINI KALZONE",
+    "21387187000106": "MULTIMERCADOS VILLAGIO",
+}
+
+export type CnpjMode = "ok" | "404" | "500" | "vazio"
+
 export interface FakeSefaz {
     readonly url: string
+    /** Mesma origem, caminho de consulta de CNPJ: o servidor atende POST (SEFAZ) e GET (CNPJ). */
+    readonly cnpjUrl: string
+    /** CNPJs consultados, na ordem. O tamanho é a contagem de consultas de nome fantasia. */
+    readonly cnpjRequests: readonly string[]
+    cnpjMode: CnpjMode
     /** Chaves recebidas, na ordem de chegada. O tamanho é a contagem de requisições. */
     readonly requests: readonly string[]
     /** Maior número de requisições em voo ao mesmo tempo. */
@@ -38,15 +52,23 @@ export interface FakeSefaz {
  */
 export async function startFakeSefaz(): Promise<FakeSefaz> {
     const requests: string[] = []
+    const cnpjRequests: string[] = []
     const timers = new Set<NodeJS.Timeout>()
 
     let mode: FakeMode = "fixture"
+    let cnpjMode: CnpjMode = "ok"
     let slowMs = 1_000
     let failures = 0
     let inFlight = 0
     let peak = 0
 
     const server = http.createServer((request, response) => {
+        // GET é consulta de CNPJ; POST é o SEFAZ. Um servidor só evita subir e fechar dois.
+        if (request.method === "GET") {
+            respondCnpj(request.url ?? "", response)
+            return
+        }
+
         inFlight++
         peak = Math.max(peak, inFlight)
 
@@ -102,6 +124,28 @@ export async function startFakeSefaz(): Promise<FakeSefaz> {
         })
     })
 
+    function respondCnpj(url: string, response: http.ServerResponse): void {
+        const cnpj = url.split("/").filter(Boolean).pop() ?? ""
+        cnpjRequests.push(cnpj)
+
+        if (cnpjMode === "404") {
+            response.writeHead(404, { "Content-Type": "application/json" })
+            response.end(JSON.stringify({ message: "CNPJ não encontrado.", type: "not_found" }))
+            return
+        }
+
+        if (cnpjMode === "500") {
+            response.writeHead(500, { "Content-Type": "application/json" })
+            response.end(JSON.stringify({ message: "erro simulado" }))
+            return
+        }
+
+        const fantasia = cnpjMode === "vazio" ? "" : TRADE_NAMES[cnpj] ?? ""
+
+        response.writeHead(200, { "Content-Type": "application/json" })
+        response.end(JSON.stringify({ nome_fantasia: fantasia, razao_social: "RAZAO SOCIAL LTDA" }))
+    }
+
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
 
     const address = server.address()
@@ -110,9 +154,15 @@ export async function startFakeSefaz(): Promise<FakeSefaz> {
         throw new Error("servidor falso subiu sem endereço TCP")
     }
 
+    const base = `http://127.0.0.1:${address.port}`
+
     return {
-        url: `http://127.0.0.1:${address.port}/`,
+        url: `${base}/`,
+        cnpjUrl: `${base}/cnpj/`,
         requests,
+        cnpjRequests,
+        get cnpjMode() { return cnpjMode },
+        set cnpjMode(value: CnpjMode) { cnpjMode = value },
         get peakConcurrency() { return peak },
         get mode() { return mode },
         set mode(value: FakeMode) { mode = value },
@@ -121,10 +171,12 @@ export async function startFakeSefaz(): Promise<FakeSefaz> {
         failNext(times: number) { failures = times },
         reset() {
             requests.length = 0
+            cnpjRequests.length = 0
             peak = 0
             inFlight = 0
             failures = 0
             mode = "fixture"
+            cnpjMode = "ok"
         },
         async close() {
             for (const timer of timers) {
@@ -148,11 +200,13 @@ export async function startFakeSefaz(): Promise<FakeSefaz> {
  *
  * Funciona porque `Config` lê `process.env` em getters, resolvendo o valor no uso.
  */
-export function useFakeSefaz(fake: Pick<FakeSefaz, "url">, timeoutMs?: number): () => void {
+export function useFakeSefaz(fake: Pick<FakeSefaz, "url" | "cnpjUrl">, timeoutMs?: number): () => void {
     const previousUrl = process.env.SEFAZ_URL
+    const previousCnpjUrl = process.env.CNPJ_API_URL
     const previousTimeout = process.env.SEFAZ_TIMEOUT_MS
 
     process.env.SEFAZ_URL = fake.url
+    process.env.CNPJ_API_URL = fake.cnpjUrl
 
     if (timeoutMs !== undefined) {
         process.env.SEFAZ_TIMEOUT_MS = String(timeoutMs)
@@ -160,6 +214,7 @@ export function useFakeSefaz(fake: Pick<FakeSefaz, "url">, timeoutMs?: number): 
 
     return () => {
         restore("SEFAZ_URL", previousUrl)
+        restore("CNPJ_API_URL", previousCnpjUrl)
         restore("SEFAZ_TIMEOUT_MS", previousTimeout)
     }
 }

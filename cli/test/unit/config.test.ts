@@ -54,4 +54,29 @@ describe("Config", () => {
 
         expect(Config.Concurrency).toBe(3)
     })
+
+    describe("consulta de CNPJ", () => {
+
+        it("tem endpoint default e garante a barra final", () => {
+            delete process.env.CNPJ_API_URL
+
+            expect(Config.CnpjApiUrl).toBe("https://brasilapi.com.br/api/cnpj/v1/")
+
+            process.env.CNPJ_API_URL = "http://127.0.0.1:1/cnpj"
+
+            expect(Config.CnpjApiUrl).toBe("http://127.0.0.1:1/cnpj/")
+        })
+
+        it("vem ligada por default", () => {
+            delete process.env.CNPJ_LOOKUP
+
+            expect(Config.CnpjLookupEnabled).toBe(true)
+        })
+
+        it.each(["off", "false", "0", "no", "OFF"])("desliga com CNPJ_LOOKUP=%s", (valor) => {
+            process.env.CNPJ_LOOKUP = valor
+
+            expect(Config.CnpjLookupEnabled).toBe(false)
+        })
+    })
 })
