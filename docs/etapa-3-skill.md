@@ -34,7 +34,13 @@ Nenhuma chave reconhecida na mensagem → pedir as chaves ao usuário, sem chama
 
 ### 3.3 — Setup e aviso de primeira execução (D2)
 
-Verificar se `cli/dist/index.js` existe.
+Antes de tudo, verificar o **Node**: sem ele a CLI não roda, e o sintoma cru é
+`node: command not found`. A skill detecta, informa e oferece o comando de instalação do sistema —
+sem executar por iniciativa própria, porque a mudança de `PATH` não alcança o terminal já aberto e
+a consulta falharia de novo na mesma sessão. Piso de versão: **Node 20** (exigência do `joi`,
+declarada em `engines`). Ver [instalacao-skill.md](instalacao-skill.md).
+
+Depois, verificar se `cli/dist/index.js` existe.
 
 **Se não existir**, antes de rodar qualquer coisa, dizer ao usuário que é a primeira execução e que
 ela vai demorar mais. Algo como:
@@ -93,6 +99,7 @@ Instruções escritas (todas as linhas abaixo estão cobertas pelo SKILL.md); o 
 validação em uso, que é a [etapa 4.6](etapa-4-testes.md) — por ser comportamento de LLM, essa
 verificação é manual.
 
+- [ ] sem Node instalado → mensagem clara com o comando de instalação, sem tentar instalar sozinha
 - [ ] skill acionada por pedido em linguagem natural com uma ou mais chaves
 - [ ] chaves em formatos variados (corridas, espaçadas, uma por linha) reconhecidas
 - [ ] primeira execução avisa o usuário **antes** de compilar

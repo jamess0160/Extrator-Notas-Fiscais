@@ -91,6 +91,12 @@ As fixtures já estão no repositório; não há etapa de captura. Há fixture p
 (`...7029821903594352`), então o servidor falso serve o caminho `NOT_FOUND` com HTML real em vez de
 sintetizado.
 
+> **Ajuste feito na implementação:** o transform é `@swc/jest`, não `ts-jest`. O `ts-jest` precisa
+> da API de JavaScript do pacote `typescript`, que o TypeScript 7 (nativo) não expõe mais, e
+> declara `typescript: ">=4.3 <7"`. O Jest e o servidor falso seguem como decidido; só o
+> transpilador mudou, com o type-check virando passo separado. Ver a
+> [etapa 4](etapa-4-testes.md).
+
 ### D10 — A categorização de itens é da skill, não da CLI
 
 A CLI entrega os itens como o SEFAZ os descreve. Categorizar (carnes, frutas, limpeza, …) e analisar
@@ -110,8 +116,8 @@ O contrato de I/O **não ganha campo de categoria**.
 |-------|---------|-----------|
 | O HTML do SEFAZ muda | Quebra silenciosa dos extratores — principalmente `ExtractItems`, que mapeia `<td>` por posição, e pode produzir números zerados em vez de erro | Fixtures + validação de sanidade nos valores extraídos (etapa 4) |
 | O sentinel de nota inexistente muda de texto | `NOT_FOUND` deixa de ser detectado e vira `PARSE_ERROR` ou dado vazio | Fixture real `...7029821903594352` + teste real opt-in (etapa 4.5) |
-| **Encoding**: as páginas declaram `charset=iso-8859-1`, mas as fixtures salvas estão em UTF-8 válido | Se o endpoint ao vivo enviar bytes latin-1, `Company` e `Description` saem com acentuação corrompida — e a suíte passa, porque testa as fixtures em UTF-8 | Decodificação explícita na CLI (etapa 2.3) + conferência de acentos no teste real (etapa 4.5) |
-| **Nenhuma fixture discrimina somar vs. pegar a primeira forma de pagamento** | Um bug de "lê só a primeira linha de pagamento" passa verde na suíte | Fixture sintética na etapa 4.1 |
+| ~~**Encoding**: as páginas declaram `charset=iso-8859-1`, mas as fixtures salvas estão em UTF-8 válido~~ | **Confirmado e resolvido.** O endpoint real serve latin-1 e não manda charset no header; as fixtures são UTF-8. A decisão passou a ser tomada pelos bytes, não pela declaração | [decode.ts](../cli/src/decode.ts), com teste de unidade de bytes montados, modo `latin1` no servidor falso e verificação contra o endpoint real |
+| ~~**Nenhuma fixture discrimina somar vs. pegar a primeira forma de pagamento**~~ | **Resolvido.** `60,00` + `40,00` em fixture sintética derivada da nota real | [cli/test/fixtures/sinteticas/](../cli/test/fixtures/sinteticas/) |
 | Rate limiting / bloqueio do SEFAZ | Lotes grandes falham em massa | D5 (concorrência 3 + retry) e erro `FETCH_ERROR` por chave, sem derrubar o lote |
 | Limite de tamanho do `argv` | Lotes grandes truncados ou erro do shell | D1 — a skill divide em chamadas de até 150 chaves |
 | `npm install` falha na primeira execução | Skill inutilizável, possivelmente com erro confuso | A skill reporta a falha do setup como tal, distinguindo-a de erro de consulta (etapa 3) |

@@ -48,12 +48,11 @@ trabalho aqui é tudo em volta deles: entrada, validação, lote, erros e saída
 - Trocar o `DanfeError` atual (`Message` solto) pelo `Error: { Code, Message }` do contrato.
 - Envolver a extração em try/catch → `PARSE_ERROR`, incluindo o caso de `Company` ausente.
 - Timeout de 15s no axios e 1 retry em erro de rede/5xx (D5).
-- **Decodificar a resposta explicitamente.** A página declara `charset=iso-8859-1`; o axios devolve
-  string decodificada como UTF-8 por padrão. Se os bytes ao vivo forem latin-1, `Company` e
-  `Description` saem com acento corrompido. Pedir `responseType: "arraybuffer"` e decodificar
-  conforme o charset declarado — `Buffer.toString("latin1")` cobre iso-8859-1 sem dependência nova.
-  Conferir contra o endpoint real ao menos uma vez (etapa 4.5), porque as fixtures estão em UTF-8 e
-  não exercitam esse caminho.
+- **Decodificar a resposta explicitamente.** O axios devolve string decodificada como UTF-8 por
+  padrão. Pedir `responseType: "arraybuffer"` e decidir o charset a partir dos bytes.
+  **Confirmado contra o endpoint real:** a página chega em **latin-1**, e o header não traz charset
+  nenhum (`Content-Type: text/html`), então não há declaração em que confiar. Ver a seção de
+  encoding abaixo.
 
 ### 2.4 — Extrair a data de emissão
 Campo `Date` do contrato, que ainda não existe no código.
@@ -142,9 +141,15 @@ não distingue a implementação correta de um bug de "pega só a primeira linha
 
 ### Encoding
 
-Todas as páginas declaram `charset=iso-8859-1`, mas as fixtures no repositório estão em **UTF-8
-válido** — provavelmente reconvertidas ao serem salvas pelo navegador. Isso significa que os testes
-não cobrem o caminho latin-1. Ver tarefa 2.3.
+As páginas declaram `charset=iso-8859-1`, as fixtures do repositório estão em **UTF-8 válido**
+(reconvertidas ao serem salvas pelo navegador) e a resposta real do endpoint vem em **latin-1** —
+verificado: 40 bytes não-ASCII, `0xE3` para `ã`, sequência UTF-8 inválida, e nenhum charset no
+header.
+
+Como as três coisas discordam, a decisão não pode vir da declaração: tentativa estrita em UTF-8 com
+fallback latin-1 é o que atende fixture e produção ao mesmo tempo
+([decode.ts](../cli/src/decode.ts)). Coberto por teste de unidade com bytes montados e, ponta a
+ponta, pelo modo `latin1` do servidor falso.
 
 ## Definição de pronto
 
@@ -165,7 +170,8 @@ simultâneas. A suíte automatizada é a [etapa 4](etapa-4-testes.md).
 ## Encontrado na implementação: os extratores estavam quebrados em CRLF
 
 `ExtractItems` lia o id do item com `/.*id="(.*)".*/`. Em JavaScript o `.` não casa carriage
-return, e as páginas usam CRLF: o id capturado saía como `Item + 1`, e o `getElementById`
+return, e as páginas usam CRLF: o id capturado saía como `Item + 1
+`, e o `getElementById`
 seguinte nunca encontrava o item — toda nota válida virava `PARSE_ERROR`. Corrigido com
 `/id="([^"]+)"/`.
 

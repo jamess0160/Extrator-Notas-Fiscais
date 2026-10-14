@@ -7,6 +7,16 @@ As fixtures já estão em [cli/test/fixtures/](../cli/test/fixtures/), nomeadas 
 **Jest** para os testes automatizados, e um **servidor HTTP falso** que serve as fixtures no lugar
 do SEFAZ. A CLI aponta para ele por `SEFAZ_URL` (D7).
 
+> **Correção de rota: o transform é `@swc/jest`, não `ts-jest`.** O projeto usa TypeScript 7, o
+> compilador nativo, cujo pacote npm não expõe mais a API de JavaScript — `require("typescript")`
+> devolve só `{ version, versionMajorMinor }`, sem `transpileModule`. O `ts-jest` depende dessa API
+> e declara `typescript: ">=4.3 <7"`: é incompatível por construção, não por configuração.
+>
+> Como o `@swc/jest` apaga os tipos sem verificá-los, o type-check virou passo próprio
+> (`npm run typecheck`, via `tsconfig.test.json`, que inclui `test/`) e roda antes do Jest. O
+> `npm test` encadeia `typecheck → build → jest`; o `build` entra porque a etapa 4.4 roda a CLI
+> **compilada** como subprocesso, e sem ele um `dist/` velho passaria verde.
+
 A vantagem sobre mockar o `axios`: o caminho de rede real é exercitado — form-urlencoded, headers,
 status, timeout, retry. Um mock de `axios` testaria o mock, não o cliente HTTP.
 
@@ -17,11 +27,14 @@ teste → sobe servidor falso em porta efêmera
 ```
 
 ### Configuração
-- `jest`, `ts-jest`, `@types/jest` em `devDependencies`.
-- Preset `ts-jest` padrão (CommonJS). Isso só funciona porque o `package.json` **não** tem
+- `jest`, `@swc/jest`, `@types/jest` em `devDependencies`.
+- Transform para CommonJS. Isso só funciona porque o `package.json` **não** tem
   `"type": "module"` — ver a nota na [etapa 2.7](etapa-2-cli.md). Com ESM, o Jest exigiria
   `--experimental-vm-modules` e configuração de transform bem mais chata.
-- `npm test` → `jest`.
+- `npm test` → `typecheck`, `build` e `jest`. `npm run test:e2e` inclui a consulta real.
+- O `tsconfig.json` ganhou `"include": ["src"]`: sem isso o `tsc` de build varreria `test/` e cada
+  arquivo de teste violaria o `rootDir`. O `tsconfig.test.json` reabre o `rootDir` e inclui os dois
+  diretórios, só para type-check.
 
 ### O servidor falso
 Helper em `cli/test/` que:
@@ -32,7 +45,9 @@ Helper em `cli/test/` que:
   página **200** com o sentinel dentro de um `alert()` JavaScript. Não há status de erro HTTP para
   simular;
 - modos injetáveis de falha para os testes de erro: HTTP 500, atraso acima do timeout, HTML
-  truncado;
+  truncado e **bytes latin-1** (que é como a página real chega — ver abaixo);
+- `failNext(n)`, para falhar só as primeiras `n` requisições e exercitar a recuperação no retry;
+- contagem de requisições e pico de concorrência, medidos no servidor;
 - fecha no `afterAll`, para o Jest não ficar com handle aberto.
 
 ## 4.1 — Testes unitários dos extratores (fixture lida de disco, sem servidor)
@@ -134,6 +149,8 @@ Checklist a executar com a skill de verdade:
 - [ ] `dist/` apagado → aviso de primeira execução aparece **antes** da compilação
 - [ ] segunda consulta → sem aviso, sem recompilar
 - [ ] `node_modules` corrompido / sem rede no install → erro reportado como falha de setup
+- [ ] `node` fora do `PATH` → skill informa a ausência e o comando de instalação, sem instalar nada
+      por conta própria
 - [ ] conferir um valor total contra a nota real, na mão
 
 ### Análise financeira ([analise-financeira.md](analise-financeira.md))
@@ -155,15 +172,54 @@ Validada à mão por construção (D10): a categorização é semântica, não d
 O penúltimo item da lista anterior é o que fecha o projeto: toda a cadeia pode estar verde e o valor ainda estar errado,
 porque `Value` é derivado da soma das formas de pagamento, não lido de um campo "total".
 
+## O charset: confirmado contra o endpoint real
+
+A dúvida que atravessou as etapas 2 e 4 está resolvida. Consultando o SEFAZ de verdade:
+
+```
+Content-Type: text/html          (sem charset no header)
+bytes não-ASCII: 40              (0xE3 = "ã" em latin-1)
+é UTF-8 válido? não
+```
+
+Ou seja: **a página real chega em latin-1**, e as fixtures do repositório estão em UTF-8 só porque
+o navegador reconverteu ao salvar. Duas consequências:
+
+- decidir o charset pelo header seria impossível (ele não informa) e pelo `<meta>` seria errado
+  para as fixtures. Decidir **pelos bytes** — tentativa estrita em UTF-8 com fallback latin-1 — é o
+  que atende os dois casos, e é o que [decode.ts](../cli/src/decode.ts) faz;
+- o modo `latin1` do servidor falso não é um cenário hipotético: é o comportamento de produção.
+
 ## Definição de pronto
 
-- [ ] `npm test` verde, **sem acesso à internet**
-- [ ] extratores cobertos pelas 6 fixtures, mais a sintética de 2 pagamentos distintos
-- [ ] caminho de decodificação latin-1 coberto
-- [ ] data de emissão testada contra a confusão com a data de consulta
-- [ ] precedência dos códigos de erro do Joi travada em teste
-- [ ] teste de vazamento de stdout passando
-- [ ] e2e real executado ao menos uma vez à mão
+- [x] `npm test` verde, **sem acesso à internet** — 100 testes em 11 suítes
+- [x] extratores cobertos pelas 6 fixtures, mais a sintética de 2 pagamentos distintos
+- [x] caminho de decodificação latin-1 coberto (unidade com bytes montados + ponta a ponta pelo
+      servidor falso) e **confirmado contra o endpoint real**
+- [x] data de emissão testada contra a confusão com a data de consulta
+- [x] precedência dos códigos de erro do Joi travada em teste
+- [x] teste de vazamento de stdout passando
+- [x] e2e real executado ao menos uma vez à mão
 - [ ] checklist 4.6 completo
 - [ ] um valor total conferido manualmente contra a nota de papel/PDF
 - [ ] checklist de análise financeira completo
+
+Os três itens abertos dependem de execução manual com a skill e da nota em papel — não há como
+automatizá-los.
+
+## Mapa dos testes
+
+| Arquivo | Cobre |
+|---------|-------|
+| [test/unit/GetDanfeValue.test.ts](../cli/test/unit/GetDanfeValue.test.ts) | soma de pagamentos, milhar, bloco ausente |
+| [test/unit/ExtractItems.test.ts](../cli/test/unit/ExtractItems.test.ts) | contagem, colunas, `Qtd × Unit ≈ Total`, regressão de CRLF |
+| [test/unit/GetDanfeDate.test.ts](../cli/test/unit/GetDanfeDate.test.ts) | as 5 datas, confusão com a data da consulta, ausência |
+| [test/unit/GetDanfeCompany.test.ts](../cli/test/unit/GetDanfeCompany.test.ts) | razão social, entidades HTML, classe ausente |
+| [test/unit/decode.test.ts](../cli/test/unit/decode.test.ts) | latin-1, UTF-8, ASCII |
+| [test/unit/schema.test.ts](../cli/test/unit/schema.test.ts) | os três códigos e a precedência entre eles |
+| [test/unit/text-number.test.ts](../cli/test/unit/text-number.test.ts) | `cleanText`, `parsePtBrNumber` |
+| [test/unit/config.test.ts](../cli/test/unit/config.test.ts) | defaults de ambiente, sem rede |
+| [test/integration/ExtractNfeData.test.ts](../cli/test/integration/ExtractNfeData.test.ts) | `NOT_FOUND`, retry, timeout, truncado, latin-1, validação sem rede |
+| [test/integration/BatchRunner.test.ts](../cli/test/integration/BatchRunner.test.ts) | ordem, dedupe, concorrência, isolamento de falha, envelope |
+| [test/integration/cli.test.ts](../cli/test/integration/cli.test.ts) | exit codes, vazamento de stdout, contrato campo a campo |
+| [test/e2e/sefaz.e2e.test.ts](../cli/test/e2e/sefaz.e2e.test.ts) | consulta real (opt-in por `RUN_E2E=1`) |

@@ -32,8 +32,9 @@ deterministic scraper and its JSON has no category field. The taxonomy is a clos
 [docs/analise-financeira.md](docs/analise-financeira.md); read it before touching anything about
 categories or analysis.
 
-Stages 1-3 are done: the CLI implements the contract and the skill is written. Stage 4 (the Jest
-suite) has not been started — see [docs/etapa-4-testes.md](docs/etapa-4-testes.md).
+All four stages are implemented. What remains is manual: the stage 4.6 checklists (skill behaviour
+and the financial analysis), which cannot be automated because the categorization is semantic.
+[docs/instalacao-skill.md](docs/instalacao-skill.md) is the install guide.
 
 ## Commands
 
@@ -50,11 +51,23 @@ Run it from the **repository root**, the way the skill does:
 node cli/dist/index.js <chave44> [<chave44> ...]
 ```
 
-`npm test` points at `jest`, which is not installed yet (stage 4), so it currently fails on the
-missing dependency. There is no linter or formatter. To exercise the CLI without touching the live
-SEFAZ, point `SEFAZ_URL` at a local server that reads `chaveNFe` from the form body and replies with
-the matching file from [cli/test/fixtures/](cli/test/fixtures/) — that is also what stage 4 will
-automate.
+```bash
+npm test                        # typecheck -> build -> jest, no internet needed
+npx jest test/unit              # one directory
+npx jest -t "soma todas as"     # one test by name
+npm run test:e2e                # adds the real SEFAZ query (sets RUN_E2E=1)
+```
+
+`npm test` chains the build because [test/integration/cli.test.ts](cli/test/integration/cli.test.ts)
+runs the **compiled** CLI as a subprocess — without it a stale `dist/` would pass green. There is no
+linter or formatter.
+
+Tests are transformed by `@swc/jest`, not `ts-jest`: TypeScript 7 is the native compiler and its npm
+package no longer exposes the JavaScript API (`require("typescript")` yields only
+`{ version, versionMajorMinor }`), which ts-jest needs and whose peer range excludes v7. swc strips
+types without checking them, so `npm run typecheck` (via `tsconfig.test.json`) is a separate step —
+the base `tsconfig.json` has `"include": ["src"]` so the build does not sweep `test/` into the
+`rootDir`.
 
 ## Architecture
 
@@ -128,10 +141,11 @@ These were found against the real fixtures and are easy to reintroduce:
   holds `alert('M230 - Documento Fiscal (NFC-e) inexistente ...')`. There is no error status to
   detect, so detection is by body sentinel, and the retry logic must not treat it as transient.
 
-Charset is decided from the bytes, not the declaration ([decode.ts](cli/src/decode.ts)): the page
-declares `iso-8859-1` while the saved fixtures are valid UTF-8, so a strict UTF-8 attempt with a
-latin-1 fallback is what handles both. This path has been tested with hand-built bytes but **not
-yet against the live endpoint**.
+Charset is decided from the bytes, not the declaration ([decode.ts](cli/src/decode.ts)). Three
+things disagree: the page declares `iso-8859-1`, the saved fixtures are valid UTF-8, and the live
+endpoint actually serves latin-1 with **no charset in the header at all** (verified: 40 non-ASCII
+bytes, `0xE3` for `ã`, invalid as UTF-8). A strict UTF-8 attempt with a latin-1 fallback is the only
+rule that handles fixture and production at once.
 
 ## Notes
 

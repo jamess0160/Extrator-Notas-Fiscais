@@ -20,7 +20,9 @@ skill, não da CLI (D10) — especificadas em [analise-financeira.md](analise-fi
 | 1 | Planejamento | [etapa-1-planejamento.md](etapa-1-planejamento.md) | concluída |
 | 2 | Desenvolvimento da CLI | [etapa-2-cli.md](etapa-2-cli.md) | concluída |
 | 3 | Desenvolvimento da Skill | [etapa-3-skill.md](etapa-3-skill.md) | escrita, validação em uso pendente |
-| 4 | Testes e validações | [etapa-4-testes.md](etapa-4-testes.md) | não iniciada |
+| 4 | Testes e validações | [etapa-4-testes.md](etapa-4-testes.md) | suíte automatizada pronta; checklists manuais pendentes |
+
+Instalação numa máquina nova: [instalacao-skill.md](instalacao-skill.md).
 
 Os produtos da etapa 1 são dois documentos de especificação:
 [contrato de I/O](contrato-io.md), consumido pelas etapas 2 e 3, e
@@ -57,6 +59,7 @@ invocável como `/notas-fiscais`; o `skill.md` da raiz é só um ponteiro para e
   DANFE: 6 arquivos, todos do RS — 5 notas válidas (de 1 a 22 itens, supermercado e farmácia) e 1
   de nota inexistente.
 - `joi` e `dotenv` instalados; scripts `build`, `build:watch` e `start` no `package.json`.
-- **Ainda não há suíte de testes nem linter.** `npm test` aponta para `jest`, que só é instalado na
-  [etapa 4](etapa-4-testes.md) — até lá o comando falha por falta da dependência. A validação feita
-  até agora foi manual, contra um servidor HTTP local servindo as fixtures.
+- Suíte com **100 testes** em `cli/test/`, rodando sem internet contra um servidor HTTP falso:
+  `cd cli && npm test` (type-check → build → jest). A consulta real ao SEFAZ fica atrás de
+  `npm run test:e2e`. Não há linter configurado.
+- Para instalar numa máquina nova: [instalacao-skill.md](instalacao-skill.md).

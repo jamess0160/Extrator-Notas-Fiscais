@@ -11,7 +11,40 @@ entrega os dados; **a análise é sua** — é ela o valor do produto.
 Divisão de trabalho, para não duplicar esforço: a CLI valida as chaves, chama o SEFAZ, interpreta o
 HTML e devolve JSON. Você não valida chave, não monta requisição e não lê HTML.
 
-Todos os comandos rodam a partir da **raiz do repositório**.
+## Passo 0 — Verificar o Node e localizar a CLI
+
+Antes de qualquer coisa, rode `node --version`.
+
+**Se o comando não existir**, pare aqui: a CLI é um programa Node e nada mais vai funcionar. Diga
+isso ao usuário e ofereça o comando do sistema dele, **sem executá-lo por conta própria**:
+
+| Sistema | Comando |
+|---------|---------|
+| Windows | `winget install OpenJS.NodeJS.LTS` |
+| macOS | `brew install node` |
+| Linux (Debian/Ubuntu) | `sudo apt install nodejs npm` |
+
+Instale só se o usuário pedir. E avise que, depois de instalar, **o terminal precisa ser reaberto**:
+a variável `PATH` do processo em execução não é atualizada, então `node` continuaria indisponível
+nesta sessão mesmo com a instalação bem-sucedida.
+
+**Se a versão for menor que 20**, também pare: a dependência `joi` exige Node 20 ou superior, e o
+sintoma de ignorar isso é um erro de instalação confuso, não uma mensagem clara.
+
+Guia completo em `<projeto>/docs/instalacao-skill.md`.
+
+## Localizar a CLI
+
+Resolva o diretório do projeto nesta ordem e use o primeiro que existir:
+
+1. `$EXTRATOR_NFE_HOME` (ou `$env:EXTRATOR_NFE_HOME` no PowerShell), se estiver definida — é como a
+   skill é instalada globalmente;
+2. a raiz do repositório atual, se ela tiver uma pasta `cli/`.
+
+Daqui em diante, `<projeto>` é esse diretório e todos os comandos rodam a partir dele. Se nenhum
+dos dois existir, diga ao usuário que a skill não encontrou o projeto e aponte o guia de
+instalação (`docs/instalacao-skill.md`) — não tente adivinhar o caminho nem instalar nada fora
+dele.
 
 ## Passo 1 — Extrair as chaves da mensagem
 
@@ -26,7 +59,7 @@ erro. A validação é dela.
 
 ## Passo 2 — Garantir que a CLI está compilada
 
-Verifique se `cli/dist/index.js` existe.
+Verifique se `<projeto>/cli/dist/index.js` existe.
 
 **Se não existir**, avise o usuário **antes** de rodar qualquer comando:
 
@@ -34,11 +67,11 @@ Verifique se `cli/dist/index.js` existe.
 > consultar. Isso leva de 30s a 1min. As próximas consultas são imediatas.
 
 O aviso vem antes, não depois — sem ele o usuário fica olhando uma skill aparentemente travada.
-Depois, em `cli/`:
+Depois, em `<projeto>/cli`:
 
 ```bash
 npm install
-npx tsc
+npm run build
 ```
 
 Se o setup falhar, reporte como **falha de setup**, mostrando a saída do npm/tsc. Não confunda com
@@ -51,15 +84,14 @@ nota não encontrada: são problemas de natureza diferente e o usuário precisa 
 Uma única chamada com todas as chaves:
 
 ```bash
-node cli/dist/index.js <chave1> <chave2> ...
+node <projeto>/cli/dist/index.js <chave1> <chave2> ...
 ```
 
 - Acima de **150 chaves**, divida em chamadas sucessivas e junte os `Results`.
 - **exit 0** → faça `JSON.parse` do stdout. Vale inclusive quando todas as chaves falharam.
 - **exit 1** → falha da ferramenta. Mostre o stderr e pare; não tente adivinhar o resultado.
 
-O stdout é exclusivamente JSON; o progresso vai para o stderr. O formato está em
-[docs/contrato-io.md](../../../docs/contrato-io.md):
+O stdout é exclusivamente JSON; o progresso vai para o stderr. O formato está em `<projeto>/docs/contrato-io.md`:
 
 ```json
 { "Total": 2, "Success": 1, "Failed": 1, "Results": [
@@ -107,7 +139,8 @@ produto inteiro antes de decidir — `ESPONJA SCOTCH-BRITE NAO RISCA LARANJA 3` 
 
 ## Passo 5 — Analisar
 
-Detalhes em [docs/analise-financeira.md](../../../docs/analise-financeira.md). O essencial:
+Detalhes em `<projeto>/docs/analise-financeira.md` — a taxonomia acima já é suficiente para
+classificar; leia o documento quando precisar do restante. O essencial:
 
 **Base de cálculo.** Totais por categoria somam `Items[].TotalValue`; o total da nota é `Value`, o
 que de fato saiu do bolso. **Os dois divergem em dados reais** — numa das notas de teste os itens
