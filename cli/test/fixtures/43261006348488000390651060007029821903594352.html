@@ -1,0 +1,167 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="cache-control" content="no-cache" />
+    <meta http-equiv="Expires" content="-1" />
+    <title>P�blico em Geral / Nota Fiscal Eletr�nica / Consulta Completa da NFC-e</title>
+    <link type="text/css" rel="stylesheet" href="../../include/sefazNFE.css" />
+    <link type="text/css" rel="stylesheet" href="../../include/estilo_aaeNFE.css" />
+    <link type="text/css" rel="stylesheet" href="../../include/AAENovo.css" />
+    <link type="text/css" rel="stylesheet" href="tableNFe.css" />
+
+    <script type="text/javascript" src="../../include/SEF_funcoes.js"></script>
+
+    <script type="text/javascript">
+
+        var naoimprimirTitulo = true;
+        var botaovoltar = true;
+
+        function trocaAba(aba) {
+            form1.aba.value = aba;
+            form1.submit();
+        }
+
+        //retorna imagem adequada, ou logo NF-e ou brasao RS
+        function imagemLogo() {
+            if (getUf()['uf'] == 'RS') return 'brasao_rs_small.png';
+            return 'logo_nfe_p.gif';
+        }
+
+        //retorna UF para layout de impress�o
+        function getUf() {
+            var uf = '43261006348488000390651060007029821903594352'.substring(0, 2);
+            switch (uf) {
+                case '12': return { 'uf': 'AC', 'ext': 'do Acre' };
+                case '27': return { 'uf': 'AL', 'ext': 'de Alagoas' };
+                case '13': return { 'uf': 'AM', 'ext': 'do Amap�' };
+                case '16': return { 'uf': 'AP', 'ext': 'do Amazonas' };
+                case '29': return { 'uf': 'BA', 'ext': 'da Bahia' };
+                case '23': return { 'uf': 'CE', 'ext': 'do Cear�' };
+                case '53': return { 'uf': 'DF', 'ext': 'do Distrito Federal' };
+                case '32': return { 'uf': 'ES', 'ext': 'do Esp�rito Santo' };
+                case '52': return { 'uf': 'GO', 'ext': 'de Goi�s' };
+                case '21': return { 'uf': 'MA', 'ext': 'do Maranh�o' };
+                case '31': return { 'uf': 'MG', 'ext': 'do Mato Grosso' };
+                case '50': return { 'uf': 'MS', 'ext': 'do Mato Grosso do Sul' };
+                case '51': return { 'uf': 'MT', 'ext': 'de Minas Gerais' };
+                case '15': return { 'uf': 'PA', 'ext': 'da Para�ba' };
+                case '25': return { 'uf': 'PB', 'ext': 'do Paran�' };
+                case '26': return { 'uf': 'PE', 'ext': 'de Pernambuco' };
+                case '22': return { 'uf': 'PI', 'ext': 'do Piau�' };
+                case '41': return { 'uf': 'PR', 'ext': 'do Paran�' };
+                case '33': return { 'uf': 'RJ', 'ext': 'do Rio de Janeiro' };
+                case '24': return { 'uf': 'RN', 'ext': 'do Rio Grande do Norte' };
+                case '11': return { 'uf': 'RO', 'ext': 'de Rond�nia' };
+                case '14': return { 'uf': 'RR', 'ext': 'de Roraima' };
+                case '43': return { 'uf': 'RS', 'ext': 'do Rio Grande do Sul' };
+                case '42': return { 'uf': 'SC', 'ext': 'de Santa Catarina' };
+                case '28': return { 'uf': 'SE', 'ext': 'de Sergipe' };
+                case '35': return { 'uf': 'SP', 'ext': 'de S�o Paulo' };
+                case '17': return { 'uf': 'TO', 'ext': 'do Tocantins' };
+            }
+        }
+
+        function imprimirNFe() {
+            var dataAtual = new Date();
+            var janela = window.open('', 'winNFeCompleta', 'top=50,left=50,width=600,height=650,scrollbars=yes');
+            var HTML = '<html>';
+
+            HTML += '<LINK rel=\"STYLESHEET\" href=\"Estilos/nfe-vis.css\" type=\"text/css\">';
+            HTML += '<style type"text/css" media="print">';
+            HTML += '.notprint {overflow: hidden;display: none;}';
+            HTML += '</style>';
+            HTML += '<style type="text/css">';
+            HTML += '.toggle { background-image:none !important; }';
+            HTML += '.toggable { display: block !important; }';
+            HTML += '</style>';
+            HTML += '<title>Impress�o NFC-e</title><body><div class="notprint"><input type="button" value="Imprimir" onClick="window.print();">&nbsp;&nbsp;&nbsp;<input type="button" value="Fechar" onClick="window.close();"><hr noshade></div>';
+            HTML += '<table width="500" align="center" border="0" cellpadding="0" cellspacing="0" class="textoVerdana9bold">';
+            HTML += '<tr><td width="70" align="center"><img src="Imagens/' + imagemLogo() + '" height="67"></td>';
+            HTML += '<td align="center" valign="middle"><strong>GOVERNO DO ESTADO ' + getUf()['ext'].toUpperCase() + '<br>SECRETARIA DA FAZENDA<br><br>DANFE NFC-e - Nota Fiscal do Consumidor Eletr�nica<br>Impresso ' + dataAtual.toLocaleDateString() + ' �s ' + dataAtual.toLocaleTimeString() + '</strong></td></tr></table><br>';
+            HTML += document.getElementById('nfce').innerHTML;
+            HTML += '<br />';
+            HTML += '<tr> <td align="left" style="padding-left:23px"><br /><table><tr><td width="200"><b>Administra��o Tribut�ria:</b>';
+            HTML += '</td><td>&nbsp;Receita Estadual RS</td></tr><tr><td><b>Data/Hora da Consulta:</b></td>';
+            HTML += '<td>&nbsp;14/10/2026&nbsp;09:44:50</td></tr></table></td></tr>';
+            HTML += '</body></html>';
+
+            janela.document.write(HTML);
+            janela.document.close();
+        }
+
+        function abrirAutorizacaoUso() {
+            var par = '?chaveNFe=43261006348488000390651060007029821903594352';
+            par += '&HML=false';
+            par += '&acao=AUT';
+            par += '&MsgUsuario=';
+
+            window.open('SAT-WEB-NFE_IMPRESSAO.asp' + par, 'autorizacaoUso', 'top=50,left=50,width=760,height=600,scrollbars=yes');
+        }
+
+        function novaConsulta() {
+
+            self.location = 'SAT-WEB-NFE-NFC_1.asp'
+        }
+
+        function visualizarAbas() {
+            var chave = '43261006348488000390651060007029821903594352';
+            var url = 'https://dfe-portal.svrs.rs.gov.br/Nfce/Consulta?chDfe=' + encodeURIComponent(chave);
+            window.open(url, '_blank');
+        }
+
+    </script>
+</head>
+
+<body style="margin: 0px;">
+
+    <script type="text/javascript" src="../../include/AAE_Cabecalho.js"></script>
+
+    <div id="nfce">
+        <table width="500px" id="respostaWS" cellspacing="0" cellpadding="5" border="0">
+            <tr>
+                <td valign="top">
+
+                    <?xml version="1.0" encoding="utf-8"?>
+                    <script
+                        type="text/javascript">alert('M230 - Documento Fiscal (NFC-e) inexistente na base de dados da SEFAZ. Falha da empresa no processo de autoriza��o.'); location.href = 'SAT-WEB-NFE-NFC_1.asp?chaveNFe=43261006348488000390651060007029821903594352';</script>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <table>
+        <tr>
+            <td style="padding-bottom:10px" align="left">
+
+                <input type="button" class="button" value="Nova Consulta" onclick="novaConsulta();" />
+            </td>
+        </tr>
+        <tr>
+            <td align="left" style="padding-left:23px">
+                <table>
+
+                    <tr>
+                        <td width="200">
+                            <b>Administra��o Tribut�ria:</b>
+                        </td>
+                        <td>
+                            &nbsp;Receita Estadual RS
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <b>Data/Hora da Consulta:</b>
+                        </td>
+                        <td>
+                            &nbsp;14/10/2026&nbsp;09:44:50
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <script type="text/javascript" src="../../include/AAE_fim.js"></script>
+</body>
+
+</html>
