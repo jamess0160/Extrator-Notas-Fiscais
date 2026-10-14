@@ -80,16 +80,21 @@ that stage 4 can test them apart:
 | [BatchRunner.ts](cli/src/BatchRunner.ts) | dedupe, concurrency, envelope, per-key failure isolation |
 | [ExtractNfeData.ts](cli/src/ExtractNfeData/ExtractNfeData.ts) | orchestrates one key; `run` never throws |
 | [SefazClient.ts](cli/src/SefazClient.ts) | POST, timeout, one retry, byte decoding |
+| [CnpjClient.ts](cli/src/CnpjClient.ts) | CNPJ → trade name, cached per batch; failure never invalidates a note |
 | [schema.ts](cli/src/schema.ts) | Joi key schema + mapping to the contract's error codes |
 | [types.ts](cli/src/types.ts) | the contract types — these *are* the serialized shape |
 
-Two invariants worth not breaking:
+Three invariants worth not breaking:
 
 - **`ExtractNfeData.run` must never throw.** `BatchRunner` isolates failures as a second line of
   defense, but the design is that every failure becomes a `Valid: false` item with an `Error.Code`
   (D4). An exception escaping here would cost the whole batch over one key.
 - **Validation precedes the network.** `validateDanfe` runs before any request, which is contract
   guarantee 5. The previous code validated *after* the `await`.
+- **The CNPJ lookup is enrichment, never a dependency.** `CnpjClient` returns `null` on any
+  failure and is called from `run`, not from the synchronous `extract`. A note stays `Valid: true`
+  with `TradeName: null` when BrasilAPI is down — which it measurably is for some CNPJs. Display
+  falls back to `Company`.
 
 `Config` ([config.ts](cli/src/config.ts)) exposes `SefazUrl`, `TimeoutMs` and `Concurrency` as
 **getters**, not constants: the value is resolved at use, so it does not depend on when `dotenv`
@@ -122,6 +127,10 @@ safe; it is the *index* into the result that is not.
 - [GetDanfeDate.ts](cli/src/ExtractNfeData/GetDanfeDate.ts) and
   [GetDanfeCompany.ts](cli/src/ExtractNfeData/GetDanfeCompany.ts) — single fields, both of which
   throw when absent so the orchestrator can turn that into `PARSE_ERROR`.
+- [GetDanfeCnpj.ts](cli/src/ExtractNfeData/GetDanfeCnpj.ts) — the exception to that rule: it
+  returns `undefined` instead of throwing, because the CNPJ is also encoded in the access key
+  (digits 7-20, see [cnpj.ts](cli/src/cnpj.ts)) and `ExtractNfeData` falls back to it. The regex
+  must stop before the `Inscrição Estadual` that follows on the same line.
 
 ### Three traps already paid for
 

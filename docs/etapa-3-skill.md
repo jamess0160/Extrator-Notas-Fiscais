@@ -83,6 +83,10 @@ Seguir [analise-financeira.md](analise-financeira.md). Em resumo:
 ### 3.6 — Apresentação
 Ordem: resumo → tabela por categoria → notas → destaques.
 
+- Nome do estabelecimento: `TradeName` (nome fantasia) e, quando ele for `null`, `Company`
+  (razão social). É o nome que o usuário reconhece — `MINI KALZONE`, não
+  `BPR COMERCIO DE ALIMENTOS EIRELI`. Razão social e CNPJ ficam disponíveis para quando ele
+  perguntar quem é a empresa.
 - Resumo: período, nº de notas, valor total, ticket médio.
 - Tabela por categoria ordenada por valor — é o que o usuário veio ver.
 - Uma linha por nota: empresa, data de emissão, valor pago, nº de itens.
@@ -107,6 +111,7 @@ verificação é manual.
 - [ ] falha de setup distinguível de falha de consulta na mensagem ao usuário
 - [ ] lote > 150 chaves dividido corretamente, com resultados somados
 - [ ] chaves com erro reportadas, nunca omitidas
+- [ ] estabelecimento exibido pelo nome fantasia, com fallback para razão social quando ausente
 - [ ] todo item classificado em categoria da lista fechada
 - [ ] divergência item-vs-pago reportada quando existir
 - [ ] análise declara quando é parcial

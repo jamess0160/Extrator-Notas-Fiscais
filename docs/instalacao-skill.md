@@ -9,7 +9,9 @@ Como deixar `/notas-fiscais` funcionando numa máquina nova. Para o que a skill 
   `engines: { node: ">= 20" }`; o `package.json` da CLI declara o mesmo, então o `npm install`
   avisa em vez de falhar adiante por motivo obscuro.
 - **npm**, que acompanha o Node.
-- Acesso à internet para `https://www.sefaz.rs.gov.br` — é o único endereço que a CLI consulta.
+- Acesso à internet para `https://www.sefaz.rs.gov.br`, de onde vêm as notas, e para
+  `https://brasilapi.com.br`, que resolve o CNPJ do emitente em nome fantasia. O segundo é
+  opcional: com `CNPJ_LOOKUP=off` a CLI usa só a razão social impressa na nota.
 
 Não precisa de Python, Docker, banco de dados nem chave de API. A consulta é pública e não
 autenticada.
@@ -156,6 +158,8 @@ Para alterar, copie `cli/.env.example` para `cli/.env`:
 | `SEFAZ_URL` | endpoint público do SEFAZ-RS | Apontar para outro endpoint — é como os testes usam um servidor local |
 | `SEFAZ_TIMEOUT_MS` | `15000` | Rede lenta |
 | `CLI_CONCURRENCY` | `3` | Consultas simultâneas ao SEFAZ |
+| `CNPJ_API_URL` | `https://brasilapi.com.br/api/cnpj/v1/` | Serviço que resolve CNPJ → nome fantasia |
+| `CNPJ_LOOKUP` | ligado | `off` desliga a consulta de nome fantasia; `TradeName` vem sempre `null` e a apresentação usa a razão social |
 
 `cli/.env` está no `.gitignore`.
 

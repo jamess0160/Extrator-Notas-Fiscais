@@ -46,6 +46,8 @@ Helper em `cli/test/` que:
   simular;
 - modos injetáveis de falha para os testes de erro: HTTP 500, atraso acima do timeout, HTML
   truncado e **bytes latin-1** (que é como a página real chega — ver abaixo);
+- atende também o `GET` de consulta de CNPJ, na mesma origem, com modos `ok`/`404`/`500`/`vazio`:
+  é o que mantém a consulta de nome fantasia fora da internet durante os testes;
 - `failNext(n)`, para falhar só as primeiras `n` requisições e exercitar a recuperação no retry;
 - contagem de requisições e pico de concorrência, medidos no servidor;
 - fecha no `afterAll`, para o Jest não ficar com handle aberto.
@@ -192,7 +194,7 @@ o navegador reconverteu ao salvar. Duas consequências:
 
 ## Definição de pronto
 
-- [x] `npm test` verde, **sem acesso à internet** — 100 testes em 11 suítes
+- [x] `npm test` verde, **sem acesso à internet** — 129 testes em 12 suítes
 - [x] extratores cobertos pelas 6 fixtures, mais a sintética de 2 pagamentos distintos
 - [x] caminho de decodificação latin-1 coberto (unidade com bytes montados + ponta a ponta pelo
       servidor falso) e **confirmado contra o endpoint real**
@@ -219,7 +221,8 @@ automatizá-los.
 | [test/unit/schema.test.ts](../cli/test/unit/schema.test.ts) | os três códigos e a precedência entre eles |
 | [test/unit/text-number.test.ts](../cli/test/unit/text-number.test.ts) | `cleanText`, `parsePtBrNumber` |
 | [test/unit/config.test.ts](../cli/test/unit/config.test.ts) | defaults de ambiente, sem rede |
-| [test/integration/ExtractNfeData.test.ts](../cli/test/integration/ExtractNfeData.test.ts) | `NOT_FOUND`, retry, timeout, truncado, latin-1, validação sem rede |
+| [test/unit/cnpj.test.ts](../cli/test/unit/cnpj.test.ts) | CNPJ da página × CNPJ da chave, normalização, formatação |
+| [test/integration/ExtractNfeData.test.ts](../cli/test/integration/ExtractNfeData.test.ts) | `NOT_FOUND`, retry, timeout, truncado, latin-1, validação sem rede, nome fantasia (cache, 404, 500, desligado) |
 | [test/integration/BatchRunner.test.ts](../cli/test/integration/BatchRunner.test.ts) | ordem, dedupe, concorrência, isolamento de falha, envelope |
 | [test/integration/cli.test.ts](../cli/test/integration/cli.test.ts) | exit codes, vazamento de stdout, contrato campo a campo |
 | [test/e2e/sefaz.e2e.test.ts](../cli/test/e2e/sefaz.e2e.test.ts) | consulta real (opt-in por `RUN_E2E=1`) |

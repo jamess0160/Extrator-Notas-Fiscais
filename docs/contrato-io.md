@@ -39,7 +39,9 @@ depuração que escape para o stdout quebra a skill. Logs vão para `console.err
     {
       "Danfe": "43251088212113025439650070000203531414448132",
       "Valid": true,
+      "Cnpj": "88212113025439",
       "Company": "COMERCIO DE MEDICAMENTOS BRAIR LTDA",
+      "TradeName": null,
       "Date": "2025-10-31T12:56:53",
       "Value": 19.9,
       "Items": [
@@ -80,8 +82,35 @@ depuração que escape para o stdout quebra a skill. Logs vão para `console.err
 União discriminada por `Valid`, como o tipo atual do código. Quem consome deve estreitar por
 `Valid` antes de ler os demais campos.
 
-`Valid: true` → `Danfe`, `Company` (string), `Date` (string), `Value` (number), `Items` (array).
+`Valid: true` → `Danfe`, `Cnpj` (string), `Company` (string), `TradeName` (string ou `null`),
+`Date` (string), `Value` (number), `Items` (array).
 `Valid: false` → `Danfe`, `Error` com `Code` e `Message`.
+
+### Identificação do emitente
+
+| Campo | Origem | Observação |
+|-------|--------|------------|
+| `Cnpj` | cabeçalho da página, com a chave de acesso como garantia | 14 dígitos, sem pontuação |
+| `Company` | cabeçalho da página | Razão social, como impressa na nota |
+| `TradeName` | Receita Federal, por CNPJ | Nome fantasia (ex. `"MINI KALZONE"`), ou `null` |
+
+`Cnpj` nunca falta: além de estar impresso na nota, ele é parte da chave de acesso — os dígitos 7 a
+20 (`UF(2) AAMM(4) CNPJ(14) …`). Quando o cabeçalho muda, a derivação pela chave assume, e o campo
+não vira motivo de `PARSE_ERROR`.
+
+No exemplo acima o campo está `null` de propósito: esse CNPJ é um caso real em que a consulta não
+devolve fantasia.
+
+`TradeName` é **`null` em dois casos distintos e indistinguíveis no JSON**: o cadastro não tem nome
+fantasia (comum em LTDA) ou a consulta não foi possível. Em ambos, a nota continua `Valid: true` —
+nome fantasia é dado de conveniência, e derrubar a consulta de uma nota fiscal porque um serviço de
+terceiros está fora do ar seria trocar o essencial pelo acessório.
+
+Para exibição, prefira `TradeName` e caia em `Company`. Essa é a única regra de nome que a skill
+precisa.
+
+> A consulta de CNPJ é o **segundo** endereço externo que a CLI toca, e o único que não é o SEFAZ.
+> Pode ser desligada com `CNPJ_LOOKUP=off`, e aí `TradeName` vem sempre `null`.
 
 `Date` é a **data de emissão da nota**, em ISO 8601 local (`YYYY-MM-DDTHH:MM:SS`), convertida do
 `DD/MM/YYYY HH:MM:SS` da página. Sem offset de fuso: a página não informa o fuso, e cravar `-03:00`

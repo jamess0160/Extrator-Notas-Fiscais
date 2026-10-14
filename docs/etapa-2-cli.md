@@ -77,6 +77,30 @@ Nas fixtures, a data vive num `<td class="NFCCabecalho_SubTitulo">` junto com n�
 Formato de origem `DD/MM/YYYY HH:MM:SS`, convertido para o ISO do contrato. Presente e consistente
 nas 5 fixtures.
 
+### 2.4b — CNPJ e nome fantasia do emitente
+
+Campos `Cnpj` e `TradeName` do contrato, acrescentados depois que as outras tarefas fecharam.
+
+O CNPJ está no cabeçalho (`CNPJ: 88.212.113/0254-39      Inscrição Estadual: 0290546800`) — o
+recorte precisa parar antes da inscrição estadual, senão captura os dígitos dela. Ele também está
+embutido na **chave de acesso**, nos dígitos 7 a 20, então a extração usa a página e cai na chave
+quando o cabeçalho não colabora: o campo nunca falta e nunca gera `PARSE_ERROR`.
+
+O nome fantasia **não está na página** — vem da BrasilAPI, sobre os dados abertos da Receita
+Federal (`GET https://brasilapi.com.br/api/cnpj/v1/<cnpj>`, sem cadastro). Regras:
+
+- falha **nunca** invalida a nota: `TradeName: null` e `Valid: true`;
+- `null` também cobre o cadastro sem fantasia, que é comum em LTDA;
+- cache por lote, com dedupe por CNPJ — duas das fixtures compartilham emitente, e o serviço é
+  público com limite de requisições;
+- retry só em 5xx e rede, como no `SefazClient`; 404 e 400 são definitivos;
+- desligável por `CNPJ_LOOKUP=off`, e o endpoint é configurável por `CNPJ_API_URL`.
+
+Medido nos CNPJs das fixtures: 3 de 4 têm fantasia, e ela é claramente mais reconhecível que a
+razão social (`BPR COMERCIO DE ALIMENTOS EIRELI` → `MINI KALZONE`,
+`SUPERMERCADOS SBS LTDA` → `MULTIMERCADOS VILLAGIO`). O quarto falha com 5xx em dois provedores
+diferentes — por isso o fallback para razão social é requisito, não hipótese.
+
 ### 2.5 — Executor de lote
 - Processa a lista com concorrência máxima 3 (D5).
 - Nunca propaga exceção de uma chave para o lote (D4): toda falha vira item `Valid: false`.

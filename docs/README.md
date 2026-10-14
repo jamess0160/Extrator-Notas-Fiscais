@@ -43,11 +43,13 @@ Módulos em [cli/src/](../cli/src/):
 | [BatchRunner.ts](../cli/src/BatchRunner.ts) | dedupe, concorrência, envelope, isolamento de falha |
 | [ExtractNfeData/ExtractNfeData.ts](../cli/src/ExtractNfeData/ExtractNfeData.ts) | valida → busca → extrai; `run` nunca lança |
 | [SefazClient.ts](../cli/src/SefazClient.ts) | POST, timeout, 1 retry, decodificação |
+| [CnpjClient.ts](../cli/src/CnpjClient.ts) | CNPJ → nome fantasia, com cache por lote; falha nunca invalida a nota |
 | [schema.ts](../cli/src/schema.ts) | schema Joi da chave e mapeamento para os códigos de erro |
 | [types.ts](../cli/src/types.ts) | tipos do contrato (substituíram o `CliTypes` obsoleto) |
 | [errors.ts](../cli/src/errors.ts) · [text.ts](../cli/src/text.ts) · [number.ts](../cli/src/number.ts) · [decode.ts](../cli/src/decode.ts) · [config.ts](../cli/src/config.ts) | mensagens pt-BR, entidades HTML, números pt-BR, charset, env |
 
 Extratores: [GetDanfeCompany.ts](../cli/src/ExtractNfeData/GetDanfeCompany.ts),
+[GetDanfeCnpj.ts](../cli/src/ExtractNfeData/GetDanfeCnpj.ts),
 [GetDanfeDate.ts](../cli/src/ExtractNfeData/GetDanfeDate.ts),
 [GetDanfeValue.ts](../cli/src/ExtractNfeData/GetDanfeValue.ts),
 [ExtractItems.ts](../cli/src/ExtractNfeData/ExtractItems.ts).
@@ -59,7 +61,7 @@ invocável como `/notas-fiscais`; o `skill.md` da raiz é só um ponteiro para e
   DANFE: 6 arquivos, todos do RS — 5 notas válidas (de 1 a 22 itens, supermercado e farmácia) e 1
   de nota inexistente.
 - `joi` e `dotenv` instalados; scripts `build`, `build:watch` e `start` no `package.json`.
-- Suíte com **100 testes** em `cli/test/`, rodando sem internet contra um servidor HTTP falso:
+- Suíte com **129 testes** em `cli/test/`, rodando sem internet contra um servidor HTTP falso:
   `cd cli && npm test` (type-check → build → jest). A consulta real ao SEFAZ fica atrás de
   `npm run test:e2e`. Não há linter configurado.
 - Para instalar numa máquina nova: [instalacao-skill.md](instalacao-skill.md).
