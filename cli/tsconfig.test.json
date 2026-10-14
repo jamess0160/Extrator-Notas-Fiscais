@@ -1,0 +1,20 @@
+{
+  // Type-check dos testes. Não emite nada: o transform do Jest é o @swc/jest, que apenas apaga os
+  // tipos. É este arquivo que faz os testes serem verificados — sem ele, erro de tipo em teste
+  // passaria batido.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    // `rootDir` precisa abrir para a raiz: com `./src` herdado, cada arquivo de teste
+    // dispararia TS6059 ("not under rootDir") mesmo sem emissão.
+    "rootDir": ".",
+    "types": [
+      "node",
+      "jest"
+    ]
+  },
+  "include": [
+    "src",
+    "test"
+  ]
+}

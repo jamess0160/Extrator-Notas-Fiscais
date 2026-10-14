@@ -10,6 +10,13 @@ export function parsePtBrNumber(raw: string): number {
     // Passa por `cleanText` porque as células numéricas da página podem trazer `&nbsp;` e
     // indentação junto do número.
     const normalized = cleanText(raw).replace(/\./g, "").replace(",", ".")
+
+    // Célula vazia precisa falhar: `Number("")` é `0`, e um zero silencioso num campo de valor
+    // passa por resultado válido em vez de denunciar que a página mudou.
+    if (normalized === "") {
+        throw new Error("Valor numérico ausente na página")
+    }
+
     const parsed = Number(normalized)
 
     if (!Number.isFinite(parsed)) {

@@ -7,13 +7,22 @@
     "build": "tsc",
     "build:watch": "tsc --watch",
     "start": "node dist/index.js",
-    "test": "jest"
+    "typecheck": "tsc --noEmit --project tsconfig.test.json",
+    "test": "npm run typecheck && npm run build && jest",
+    "test:watch": "jest --watch",
+    "test:e2e": "node scripts/run-e2e.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": ">=20"
+  },
   "devDependencies": {
+    "@swc/jest": "^0.2.39",
+    "@types/jest": "^30.0.0",
     "@types/node": "^26.6.5",
+    "jest": "^30.5.2",
     "typescript": "^7.0.2"
   },
   "dependencies": {

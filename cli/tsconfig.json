@@ -32,5 +32,10 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-  }
+  },
+  // Sem isso o `tsc` varreria `test/` também, e cada arquivo de teste violaria o rootDir `./src`.
+  // Os testes são type-checkados por tsconfig.test.json, que os inclui de propósito.
+  "include": [
+    "src"
+  ]
 }
