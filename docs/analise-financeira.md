@@ -6,9 +6,15 @@ análise o que o [contrato de I/O](contrato-io.md) é para a CLI.
 Entrada: o JSON do contrato, já consultado. A análise **não** faz rede, não chama a CLI e não
 reinterpreta HTML.
 
+A análise tem **dois eixos**: *o que* foi comprado (a taxonomia de itens abaixo) e *onde* (o
+`Segment` que a CLI devolve). O segundo é dado, não inferência — ver
+[ramo do estabelecimento](contrato-io.md#ramo-do-estabelecimento).
+
 ## D10 — Quem categoriza é a skill, não a CLI
 
-A categorização acontece na skill (ou seja, no Claude lendo o JSON), não na CLI.
+A categorização **de itens** acontece na skill (ou seja, no Claude lendo o JSON), não na CLI. O
+ramo do estabelecimento é o caso oposto e fica na CLI: `5611203` é lanchonete por definição da
+tabela do IBGE, sem texto a interpretar.
 
 As descrições reais das fixtures explicam por quê:
 
@@ -52,7 +58,13 @@ execuções diferentes e nada é comparável ao longo do tempo.
 | `Limpeza` | detergente, sabão, esponja, desinfetante, álcool | `DETERGENTE GIRANDO SOL NEUTRO 500ML`, `ESPONJA SCOTCH-BRITE`, `ALCOOL PRONTO SOCORRO 1L` |
 | `Higiene pessoal` | sabonete, shampoo, barbear, papel higiênico | `SABONETE LUX SUAVE BUQUE DE JASMIM 85G`, `APARELHO BIC 3 ENCARTELADO` |
 | `Saúde e farmácia` | medicamentos, suplementos, material de saúde | `DIPIRONA 1G 20CP GEN PRATI` |
+| `Refeição fora de casa` | pratos, porções e bebidas servidas em restaurante, lanchonete ou bar | — (depende do ramo; ver abaixo) |
+| `Combustível` | gasolina, etanol, diesel, GLP | — |
 | `Outros` | não classificável com confiança | — |
+
+As duas penúltimas **dependem do `Segment`** e não existiriam sem ele. Numa lanchonete os itens são
+pratos, não ingredientes: `X-BURGER` não é `Carnes e peixes` nem `Padaria`, e a descrição sozinha
+não distingue um hambúrguer pronto de carne moída. É o ramo que transforma esse palpite em dedução.
 
 Regras:
 - `Outros` é resposta legítima. Chutar categoria é pior que admitir incerteza, porque contamina o
@@ -60,7 +72,12 @@ Regras:
 - Se `Outros` passar de ~10% do valor total, dizer isso ao usuário — é sinal de que a análise está
   cega para uma parte relevante da compra.
 - Categorizar pelo **produto**, não pelo estabelecimento: uma farmácia vende chocolate e um
-  supermercado vende remédio.
+  supermercado vende remédio. O `Segment` **não sobrepõe** essa regra.
+- O `Segment` entra em exatamente dois lugares: habilitando `Refeição fora de casa` e
+  `Combustível`, e desempatando descrição genuinamente ambígua. Nunca para reclassificar um produto
+  claro.
+- `Segment: null` não autoriza inferir o ramo pelo nome do estabelecimento para então escolher
+  categoria. Sem ramo, vale a descrição do item e nada mais.
 
 ## Base de cálculo: itens, não o valor pago
 
@@ -91,6 +108,14 @@ Empresa, data de emissão, valor pago, nº de itens, e as 3 maiores categorias.
 ### Por categoria
 Tabela ordenada por valor decrescente: categoria, valor, % do total de itens, nº de itens.
 É o núcleo da análise — o que o usuário quer é "quanto eu gastei com carne".
+
+### Por ramo
+Quando houver mais de um `Segment` no lote: tabela com ramo, nº de notas, valor pago e ticket
+médio. É o eixo "onde gastei", e para finanças pessoais costuma ser mais acionável que o de
+produto — mercado é lista de compras, restaurante é decisão.
+
+Notas com `Segment: null` aparecem como linha própria rotulada *ramo não identificado*, nunca
+diluídas nas outras nem omitidas.
 
 ### Destaques
 - Top 5 itens por `TotalValue`

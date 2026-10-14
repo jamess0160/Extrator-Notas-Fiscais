@@ -8,6 +8,12 @@ CLI that extracts data from a Brazilian NFC-e (electronic consumer invoice) give
 DANFE access key. It POSTs the key to the Rio Grande do Sul SEFAZ public consultation endpoint and
 scrapes the returned HTML page for the issuing company, total paid value, and line items.
 
+**Two commands.** `full` is that pipeline. `scan` resolves only the issuer and its line of business
+(ramo) and **never touches SEFAZ** — the CNPJ is inside the key itself (digits 7-20), so the skill
+can show "3 notes from supermarkets, 1 from a restaurant" and let the user choose what to analyze
+before paying for the full queries. A bare list of keys means `full`, for compatibility with the
+packages already distributed.
+
 The end goal is a Claude Code **skill**: the user invokes it with several DANFE keys, the skill
 calls this CLI once with all of them, and the CLI returns a JSON result per key.
 
@@ -34,10 +40,17 @@ first-run warning, concurrency 3, partial failure never aborts the batch, Joi fo
 (schemas in [cli/src/schema.ts](cli/src/schema.ts)), `SEFAZ_URL` from the environment, and Jest
 tests driven by a fake HTTP server that serves [cli/test/fixtures/](cli/test/fixtures/).
 
-Item categorization and financial analysis belong to the **skill**, not the CLI — the CLI stays a
-deterministic scraper and its JSON has no category field. The taxonomy is a closed list in
+**Item** categorization and financial analysis belong to the **skill**, not the CLI — the CLI stays a
+deterministic scraper and its JSON has no item category field. The taxonomy is a closed list in
 [docs/analise-financeira.md](docs/analise-financeira.md); read it before touching anything about
 categories or analysis.
+
+The establishment's **ramo** is the deliberate exception and lives in the CLI
+([segment.ts](cli/src/segment.ts)): mapping CNAE `5611203` to `Restaurante` is a numeric table
+lookup, not a judgment about abbreviated free text, so it belongs where it can be unit-tested and
+is stable across runs. Two categories in the skill's taxonomy (`Refeição fora de casa`,
+`Combustível`) exist *because* of it — in a restaurant the line items are dishes, and the
+description alone cannot tell a cooked burger from ground beef.
 
 All four stages are implemented. What remains is manual: the stage 4.6 checklists (skill behaviour
 and the financial analysis), which cannot be automated because the categorization is semantic.
@@ -55,7 +68,9 @@ npm run build:watch
 Run it from the **repository root**, the way the skill does:
 
 ```bash
-node cli/dist/index.js <chave44> [<chave44> ...]
+node cli/dist/index.js scan <chave44> [<chave44> ...]   # ramo do emitente, sem tocar o SEFAZ
+node cli/dist/index.js full <chave44> [<chave44> ...]   # a nota inteira
+node cli/dist/index.js <chave44> [<chave44> ...]        # = full, compatibilidade
 ```
 
 ```bash
@@ -96,7 +111,10 @@ that stage 4 can test them apart:
 | [BatchRunner.ts](cli/src/BatchRunner.ts) | dedupe, concurrency, envelope, per-key failure isolation |
 | [ExtractNfeData.ts](cli/src/ExtractNfeData/ExtractNfeData.ts) | orchestrates one key; `run` never throws |
 | [SefazClient.ts](cli/src/SefazClient.ts) | POST, timeout, one retry, byte decoding |
-| [CnpjClient.ts](cli/src/CnpjClient.ts) | CNPJ → trade name, cached per batch; failure never invalidates a note |
+| [ScanRunner.ts](cli/src/ScanRunner.ts) | the `scan` command: validate, derive CNPJ from the key, one lookup per distinct CNPJ, group by ramo |
+| [CnpjClient.ts](cli/src/CnpjClient.ts) | CNPJ → trade name + CNAE + ramo; two cache levels; failure never invalidates a note |
+| [CnpjCache.ts](cli/src/CnpjCache.ts) | on-disk cache of CNPJ lookups, shared between invocations |
+| [segment.ts](cli/src/segment.ts) | CNAE → ramo, from the official IBGE code list |
 | [schema.ts](cli/src/schema.ts) | Joi key schema + mapping to the contract's error codes |
 | [types.ts](cli/src/types.ts) | the contract types — these *are* the serialized shape |
 
@@ -109,12 +127,33 @@ Three invariants worth not breaking:
   guarantee 5. The previous code validated *after* the `await`.
 - **The CNPJ lookup is enrichment, never a dependency.** `CnpjClient` returns `null` on any
   failure and is called from `run`, not from the synchronous `extract`. A note stays `Valid: true`
-  with `TradeName: null` when BrasilAPI is down — which it measurably is for some CNPJs. Display
-  falls back to `Company`.
+  with `TradeName`/`Cnae`/`Segment` all `null` when BrasilAPI is down — which it measurably is for
+  some CNPJs (`88212113025439`, the pharmacy fixture, answers 503). Display falls back to
+  `Company`, and the scan shows those notes as their own *ramo não identificado* group rather than
+  dropping them.
+- **`scan` must never generate SEFAZ traffic** (contract guarantee 6), and must look up **one
+  request per distinct CNPJ**, not per key (guarantee 7). Both are asserted in
+  [ScanRunner.test.ts](cli/test/integration/ScanRunner.test.ts); if the first one breaks, the
+  command has lost its reason to exist.
+- **`Segment: null` and `Segment: "Outro"` are different.** `null` is *not looked up*; `"Outro"` is
+  *looked up, ramo outside the closed list*. The skill branches on that difference, so never
+  collapse one into the other.
+- **The disk cache stores public registry data only** — trade name, legal name, CNAE, keyed by
+  CNPJ. Never a DANFE key, value, or line item: those are a person's purchases tied to their CPF,
+  while a CNPJ's registration is open data. That distinction is what keeps the file harmless, and
+  it is asserted in [CnpjCache.test.ts](cli/test/unit/CnpjCache.test.ts). Note this means the
+  package's `LEIA-ME.md` can no longer claim the program writes nothing to disk.
 
 `Config` ([config.ts](cli/src/config.ts)) exposes `SefazUrl`, `TimeoutMs` and `Concurrency` as
 **getters**, not constants: the value is resolved at use, so it does not depend on when `dotenv`
 ran and tests can swap `SEFAZ_URL` between cases.
+
+[test/helpers/setupEnv.ts](cli/test/helpers/setupEnv.ts) forces `CNPJ_CACHE=off` for the whole
+suite, registered as a Jest `setupFiles`. Without it the tests would write to the real
+`~/.extrator-nfe/cnpj.json` and, worse, one run would contaminate the next: the assertions that
+count requests against the fake server would start seeing zero. `CnpjCache.test.ts` is the only
+file that re-enables it, always pointing at a `mkdtemp` directory. The subprocess test in
+`cli.test.ts` passes `CNPJ_CACHE: "off"` in the child's env, since `setupFiles` does not reach it.
 
 Shared text/number handling lives in [text.ts](cli/src/text.ts) (`cleanText` — HTML entities plus
 whitespace collapsing) and [number.ts](cli/src/number.ts) (`parsePtBrNumber`). Any new scraped
@@ -147,6 +186,11 @@ safe; it is the *index* into the result that is not.
   returns `undefined` instead of throwing, because the CNPJ is also encoded in the access key
   (digits 7-20, see [cnpj.ts](cli/src/cnpj.ts)) and `ExtractNfeData` falls back to it. The regex
   must stop before the `Inscrição Estadual` that follows on the same line.
+
+`normalizeCnaeCode` pads the CNAE to 7 digits with `padStart`, which is load-bearing: BrasilAPI
+returns the code as a **number**, and CNAE divisions 01-09 exist, so `0111301` arrives as `111301`.
+Without the leading zero the prefix read would be `1113` instead of `0111` — a different line of
+business entirely.
 
 ### Three traps already paid for
 

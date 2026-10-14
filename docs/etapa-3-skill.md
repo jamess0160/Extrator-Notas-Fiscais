@@ -13,11 +13,18 @@ chama o SEFAZ e **não** interpreta HTML — isso é da CLI. O que ela faz:
 
 1. extrair as chaves DANFE da mensagem do usuário;
 2. garantir que a CLI está compilada, avisando quando for a primeira execução;
-3. invocar a CLI com as chaves;
-4. **categorizar os itens e produzir a análise financeira** (D10);
-5. apresentar o resultado.
+3. rodar o `scan`, mostrar os ramos encontrados e **perguntar o que o usuário quer analisar**;
+4. filtrar as chaves conforme a escolha e invocar o `full` com elas;
+5. **categorizar os itens e produzir a análise financeira** (D10);
+6. apresentar o resultado.
 
-O passo 4 é o valor do produto: a CLI entrega dados, a skill entrega leitura dos dados.
+O passo 5 é o valor do produto: a CLI entrega dados, a skill entrega leitura dos dados.
+
+O passo 3 existe porque o uso real parte de um lote grande e indiscriminado — todas as notas em que
+o usuário informou o CPF, baixadas do site do governo — e quase nunca é isso que ele quer analisar.
+Como o `scan` não consulta o SEFAZ (o CNPJ está dentro da chave), perguntar antes custa quase nada
+e evita consultar nota que ninguém pediu. Com **uma única chave** o passo é pulado: decisão com uma
+opção só é atrito.
 
 ## Tarefas
 

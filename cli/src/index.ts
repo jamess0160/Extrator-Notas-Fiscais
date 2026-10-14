@@ -1,6 +1,7 @@
 import path from "node:path"
 import dotenv from "dotenv"
 import { BatchRunner } from "./BatchRunner"
+import { ScanRunner } from "./ScanRunner"
 import { VERSION } from "./version"
 
 // `quiet` é obrigatório, não cosmético: sem ele o dotenv escreve um banner no **stdout**, que o
@@ -14,16 +15,23 @@ dotenv.config({
 const USAGE = [
     `Consulta de NFC-e do RS — versão ${VERSION}`,
     "",
-    "Uso: node <cli> <chave-danfe> [chave-danfe ...]",
+    "Uso: node <cli> [comando] <chave-danfe> [chave-danfe ...]",
     "",
-    "  Consulta uma ou mais NFC-e do RS pela chave de acesso de 44 dígitos",
-    "  e escreve o JSON de resultado no stdout.",
+    "Comandos:",
+    "  scan   identifica emitente e ramo de cada nota pelo CNPJ contido na chave,",
+    "         sem consultar o SEFAZ. Serve para decidir quais notas analisar.",
+    "  full   consulta a nota inteira no SEFAZ: data, valor e itens. É o padrão",
+    "         quando nenhum comando é informado.",
     "",
     "Opções:",
     "  --version, -v   imprime a versão e sai",
     "  --help, -h      imprime esta ajuda e sai",
     "",
 ]
+
+const COMMANDS = ["scan", "full"] as const
+
+type Command = typeof COMMANDS[number]
 
 async function main(): Promise<void> {
     const args = process.argv.slice(2)
@@ -43,21 +51,35 @@ async function main(): Promise<void> {
     const desconhecida = args.find((arg) => arg.startsWith("-"))
 
     if (desconhecida) {
-        process.stderr.write("Opção desconhecida: " + desconhecida + "\n\n" + USAGE.join("\n"))
-        process.exitCode = 1
-        return
+        return fail("Opção desconhecida: " + desconhecida)
     }
 
-    if (args.length === 0) {
+    // Comando ausente significa `full`: é o formato que já está distribuído por aí, e quebrá-lo
+    // obrigaria quem tem a versão antiga da skill a atualizar antes de conseguir consultar.
+    const command: Command = isCommand(args[0]) ? args[0] : "full"
+    const danfes = isCommand(args[0]) ? args.slice(1) : args
+
+    if (danfes.length === 0) {
         process.stderr.write(USAGE.join("\n"))
         process.exitCode = 1
         return
     }
 
-    const result = await new BatchRunner().run(args)
+    const result = command === "scan"
+        ? await new ScanRunner().run(danfes)
+        : await new BatchRunner().run(danfes)
 
     // Única escrita em stdout de todo o programa, nas invocações de consulta.
     process.stdout.write(JSON.stringify(result))
+}
+
+function isCommand(arg: string | undefined): arg is Command {
+    return arg !== undefined && (COMMANDS as readonly string[]).includes(arg)
+}
+
+function fail(message: string): void {
+    process.stderr.write(message + "\n\n" + USAGE.join("\n"))
+    process.exitCode = 1
 }
 
 main().catch((error: unknown) => {

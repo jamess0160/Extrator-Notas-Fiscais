@@ -1,5 +1,5 @@
 import { parseFromString } from "dom-parser"
-import { cnpjFromDanfe, formatCnpj, normalizeCnpj } from "../../src/cnpj"
+import { cnpjFromDanfe, formatCnpj, normalizeCnpj, periodFromDanfe } from "../../src/cnpj"
 import { GetDanfeCnpj } from "../../src/ExtractNfeData/GetDanfeCnpj"
 import { KEYS, VALID_KEYS, readFixture } from "../helpers/fixtures"
 
@@ -77,5 +77,24 @@ describe("GetDanfeCnpj", () => {
         const semCnpj = readFixture(KEYS.farmacia).replaceAll("CNPJ:", "Documento:")
 
         expect(new GetDanfeCnpj().run(parseFromString(semCnpj))).toBeUndefined()
+    })
+})
+
+describe("periodFromDanfe", () => {
+
+    it("lê o AAMM da chave sem consultar nada", () => {
+        expect(periodFromDanfe(KEYS.farmacia)).toBe("2025-10")
+        expect(periodFromDanfe(KEYS.mercado5)).toBe("2026-10")
+    })
+
+    it("recusa mês impossível em vez de devolver data inválida", () => {
+        // Mesmo layout, `AAMM` = 2613: mês 13 não existe, e devolver "2026-13" propagaria lixo.
+        expect(periodFromDanfe("43261306348488000390651060003029821903594352")).toBeUndefined()
+        expect(periodFromDanfe("43260006348488000390651060003029821903594352")).toBeUndefined()
+    })
+
+    it("recusa o que não é numérico na posição do período", () => {
+        expect(periodFromDanfe("43ab1006348488000390651060003029821903594352")).toBeUndefined()
+        expect(periodFromDanfe("432")).toBeUndefined()
     })
 })

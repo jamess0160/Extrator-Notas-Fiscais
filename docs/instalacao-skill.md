@@ -19,8 +19,9 @@ Para o que a skill faz, veja
   `engines: { node: ">= 20" }`; o `package.json` da CLI declara o mesmo, então o `npm install`
   avisa em vez de falhar adiante por motivo obscuro.
 - Acesso à internet para `https://www.sefaz.rs.gov.br`, de onde vêm as notas, e para
-  `https://brasilapi.com.br`, que resolve o CNPJ do emitente em nome fantasia. O segundo é
-  opcional: com `CNPJ_LOOKUP=off` a CLI usa só a razão social impressa na nota.
+  `https://brasilapi.com.br`, que resolve o CNPJ do emitente em nome fantasia e ramo de atividade.
+  O segundo é opcional: com `CNPJ_LOOKUP=off` a CLI usa só a razão social impressa na nota, e sem
+  ramo o passo de filtro da skill deixa de funcionar.
 - **npm e git**, apenas no caminho B.
 
 Não precisa de Python, Docker, banco de dados nem chave de API. As duas consultas são públicas e
@@ -146,6 +147,12 @@ node cli/dist/index.js 43251088212113025439650070000203531414448132
 Saída esperada: uma linha de JSON no stdout com `"Valid":true`, e o progresso no stderr. Se vier
 `"Code":"NOT_FOUND"`, a CLI está funcionando — é a nota que não está mais na base.
 
+Para conferir o `scan`, que não consulta o SEFAZ e por isso responde na hora:
+
+```bash
+node cli/dist/index.js scan 43251088212113025439650070000203531414448132
+```
+
 ### Usar de dentro do repositório
 
 Abra o Claude Code **nesta pasta**. A skill está em `.claude/skills/notas-fiscais/` e é reconhecida
@@ -219,8 +226,24 @@ ambiente.
 | `SEFAZ_URL` | endpoint público do SEFAZ-RS | Apontar para outro endpoint — é como os testes usam um servidor local |
 | `SEFAZ_TIMEOUT_MS` | `15000` | Rede lenta |
 | `CLI_CONCURRENCY` | `3` | Consultas simultâneas ao SEFAZ |
-| `CNPJ_API_URL` | `https://brasilapi.com.br/api/cnpj/v1/` | Serviço que resolve CNPJ para nome fantasia |
-| `CNPJ_LOOKUP` | ligado | `off` desliga a consulta de nome fantasia; `TradeName` vem sempre `null` e a apresentação usa a razão social |
+| `CNPJ_API_URL` | `https://brasilapi.com.br/api/cnpj/v1/` | Serviço que resolve CNPJ para nome fantasia e CNAE |
+| `CNPJ_LOOKUP` | ligado | `off` desliga a consulta de cadastro; `TradeName`, `Cnae` e `Segment` vêm sempre `null` |
+| `CNPJ_CACHE` | ligado | `off` desliga o cache em disco; cada invocação volta a consultar os CNPJs |
+| `CNPJ_CACHE_PATH` | `~/.extrator-nfe/cnpj.json` | Outro local para o arquivo de cache |
+| `CNPJ_CACHE_TTL_DAYS` | `30` | Prazo de validade das entradas do cache |
+
+### O cache de CNPJ
+
+O `scan` e o `full` são invocações separadas — é essa separação que permite decidir no meio do
+caminho quais notas analisar. Sem persistência, cada CNPJ seria consultado duas vezes no mesmo
+fluxo, então o cache não é otimização: é o que torna o fluxo de dois passos viável.
+
+O arquivo é um JSON só, em `~/.extrator-nfe/cnpj.json`, e guarda **apenas dado público de cadastro**
+indexado por CNPJ: nome fantasia, razão social e CNAE. Nunca a chave DANFE, nunca valor, nunca item
+— as chaves são compras vinculadas ao seu CPF, enquanto o cadastro de um CNPJ é informação aberta da
+Receita Federal. É essa distinção que mantém o arquivo inofensivo.
+
+Apagar o arquivo é seguro: a próxima consulta o reconstrói. `CNPJ_CACHE=off` desliga tudo.
 
 `cli/.env` está no `.gitignore`.
 
@@ -230,7 +253,7 @@ Só no caminho B.
 
 ```bash
 cd cli
-npm test          # type-check + build + 132 testes, sem tocar a internet
+npm test          # type-check + build + 171 testes, sem tocar a internet
 npm run test:e2e  # inclui a consulta real ao SEFAZ (ver etapa 4.5)
 ```
 
@@ -249,3 +272,5 @@ Detalhes em [etapa-4-testes.md](etapa-4-testes.md).
 | `"Code":"FETCH_ERROR"` | Sem rede, proxy ou SEFAZ fora do ar | Testar `curl -I https://www.sefaz.rs.gov.br`; a CLI já tenta duas vezes |
 | `"Code":"PARSE_ERROR"` | A página do SEFAZ mudou de estrutura | A `Message` detalha o que faltou; `npm run test:e2e` confirma |
 | `TradeName` sempre `null` | `CNPJ_LOOKUP=off`, ou BrasilAPI fora do ar | É degradação prevista: a nota continua válida e a apresentação usa a razão social |
+| `Segment` sempre `null` no `scan` | mesma causa acima | As notas aparecem como *ramo não identificado* e seguem analisáveis; só o filtro por ramo fica indisponível |
+| `aviso: cache de CNPJ indisponível` | sem permissão de escrita em `~`, ou disco cheio | A CLI segue sem cache, consultando de novo a cada invocação; `CNPJ_CACHE_PATH` aponta para outro lugar |

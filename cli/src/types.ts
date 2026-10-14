@@ -11,6 +11,42 @@ export type ErrorCode =
     | "FETCH_ERROR"
     | "PARSE_ERROR"
 
+/**
+ * Ramo do estabelecimento, lista fechada. A tabela de CNAE para ramo está em
+ * [segment.ts](segment.ts); a lista é fechada pelo mesmo motivo da taxonomia de itens — sem ela,
+ * agregado nenhum é comparável entre execuções.
+ */
+export type Segment =
+    | "Supermercado"
+    | "Loja de conveniência"
+    | "Padaria e doces"
+    | "Açougue e peixaria"
+    | "Hortifrúti"
+    | "Bebidas"
+    | "Alimentos especializados"
+    | "Restaurante"
+    | "Farmácia"
+    | "Saúde"
+    | "Cosméticos e higiene"
+    | "Combustível e gás"
+    | "Loja de departamento"
+    | "Vestuário e calçados"
+    | "Material de construção"
+    | "Eletrônicos e eletrodomésticos"
+    | "Móveis e utilidades domésticas"
+    | "Livraria e papelaria"
+    | "Esporte e lazer"
+    | "Pet shop"
+    | "Veículos e autopeças"
+    | "Outro"
+
+/** Atividade econômica principal declarada pelo emitente, como a Receita Federal a informa. */
+export interface CnaeInfo {
+    /** Subclasse com 7 dígitos, sem pontuação (ex. `"4711302"`). */
+    Code: string
+    Description: string
+}
+
 export interface NfeItem {
     Description: string
     Quantity: number
@@ -41,6 +77,13 @@ export interface DanfeSuccess {
      * caia em `Company` quando for `null`.
      */
     TradeName: string | null
+    /** CNAE principal, ou `null` quando a consulta de CNPJ não foi possível. */
+    Cnae: CnaeInfo | null
+    /**
+     * Ramo derivado do `Cnae`. `null` significa *sem CNAE* (consulta desligada ou indisponível);
+     * `"Outro"` significa *com CNAE, fora da lista*. Não são a mesma coisa.
+     */
+    Segment: Segment | null
     /** Data de emissão em ISO 8601 local, sem offset: `YYYY-MM-DDTHH:MM:SS`. */
     Date: string
     Value: number
@@ -55,4 +98,48 @@ export interface BatchResult {
     Success: number
     Failed: number
     Results: DanfeResult[]
+}
+
+/**
+ * Item do `scan`. Traz só o que se obtém **sem consultar o SEFAZ**: o CNPJ sai da própria chave de
+ * acesso e o resto vem da consulta de CNPJ. Sem data, valor ou itens, que só existem na nota.
+ */
+export interface ScanSuccess {
+    Danfe: string
+    Valid: true
+    Cnpj: string
+    /** Razão social da Receita Federal — no `scan` não há a página da nota de onde lê-la. */
+    Company: string | null
+    TradeName: string | null
+    Cnae: CnaeInfo | null
+    Segment: Segment | null
+    /**
+     * Competência da nota (`YYYY-MM`), dos dígitos 3 a 6 da chave. Sai de graça junto do CNPJ e
+     * permite filtrar por período antes de qualquer requisição.
+     */
+    Period: string | null
+}
+
+export type ScanItem = ScanSuccess | DanfeFailure
+
+/** Um ramo presente no lote, com as chaves que o compõem. */
+export interface ScanGroup {
+    Segment: Segment | null
+    /** CNPJs distintos — "quantos estabelecimentos", não quantas notas. */
+    Establishments: number
+    Notes: number
+    /** Chaves do grupo, prontas para virar o argumento do `full`. */
+    Danfes: string[]
+}
+
+export interface ScanResult {
+    Total: number
+    Success: number
+    Failed: number
+    /** Chaves válidas cujo ramo foi identificado. */
+    Resolved: number
+    /** Chaves válidas sem ramo — consulta de CNPJ desligada ou indisponível. */
+    Unresolved: number
+    Segments: ScanGroup[]
+    Results: ScanItem[]
 }

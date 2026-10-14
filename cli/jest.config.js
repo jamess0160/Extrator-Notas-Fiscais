@@ -15,6 +15,7 @@
 module.exports = {
     testEnvironment: "node",
     roots: ["<rootDir>/test"],
+    setupFiles: ["<rootDir>/test/helpers/setupEnv.ts"],
     testMatch: ["**/*.test.ts"],
     transform: {
         "^.+\.ts$": ["@swc/jest", {

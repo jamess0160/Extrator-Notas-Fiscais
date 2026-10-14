@@ -98,16 +98,24 @@ essa parte, o código está aberto e é curto o suficiente para ser lido.
 ## O que o programa faz na sua máquina
 
 - **Rede:** fala com dois endereços, e só com eles — `www.sefaz.rs.gov.br`, que devolve a página
-  pública da nota, e `brasilapi.com.br`, que resolve o CNPJ do emitente em nome fantasia a partir
-  dos dados abertos da Receita Federal. A segunda consulta é opcional: com a variável de ambiente
-  `CNPJ_LOOKUP=off`, a skill usa apenas a razão social impressa na nota.
-- **Disco:** não escreve nada. Lê apenas o próprio arquivo.
+  pública da nota, e `brasilapi.com.br`, que resolve o CNPJ do emitente em nome fantasia e ramo de
+  atividade a partir dos dados abertos da Receita Federal. A segunda consulta é opcional: com a
+  variável de ambiente `CNPJ_LOOKUP=off`, a skill usa apenas a razão social impressa na nota.
+- **Disco:** escreve **um** arquivo, `~/.extrator-nfe/cnpj.json`, que é o cache das consultas de
+  CNPJ. Guarda apenas dado público de cadastro indexado por CNPJ — nome fantasia, razão social e
+  CNAE. **Nunca** chave de nota, valor ou item comprado. Apagar o arquivo é seguro, e
+  `CNPJ_CACHE=off` desliga a escrita por completo. Fora disso, só lê o próprio programa.
 - **Credenciais:** não usa nenhuma. A consulta de nota fiscal do SEFAZ é pública e não
   autenticada; a da Receita também.
 - **Telemetria:** nenhuma.
 
 As chaves que você consultar vão para o SEFAZ (que já as conhece) e o CNPJ do emitente vai para a
 BrasilAPI. Nada além disso sai da sua máquina.
+
+O cache existe porque a skill consulta em dois passos: primeiro identifica o ramo de cada
+estabelecimento — o que não exige o SEFAZ, já que o CNPJ está dentro da chave de acesso — para você
+escolher quais notas analisar, e só depois busca as notas escolhidas. Sem o cache, cada CNPJ seria
+consultado duas vezes no mesmo fluxo.
 
 ## Limites conhecidos
 

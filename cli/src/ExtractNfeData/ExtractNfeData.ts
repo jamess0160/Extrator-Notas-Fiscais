@@ -63,11 +63,17 @@ export class ExtractNfeData {
             return result
         }
 
-        // Enriquecimento, não extração: a consulta de nome fantasia é um serviço externo e fica
-        // fora do `extract` para que a interpretação do HTML continue sincrona e testável sem rede.
+        // Enriquecimento, não extração: a consulta de CNPJ é um serviço externo e fica fora do
+        // `extract` para que a interpretação do HTML continue sincrona e testável sem rede.
+        const info = await this.cnpjClient.info(result.Cnpj)
+
+        // `Company` continua vindo da **nota**, não do cadastro: a página é o documento fiscal, e
+        // a razão social impressa nela é a que o usuário tem em mãos.
         return {
             ...result,
-            TradeName: await this.cnpjClient.tradeName(result.Cnpj),
+            TradeName: info?.TradeName ?? null,
+            Cnae: info?.Cnae ?? null,
+            Segment: info?.Segment ?? null,
         }
     }
 
@@ -91,6 +97,8 @@ export class ExtractNfeData {
                 Cnpj: this.GetDanfeCnpj.run(dom) ?? cnpjFromDanfe(danfe) ?? "",
                 Company: this.GetDanfeCompany.run(dom),
                 TradeName: null,
+                Cnae: null,
+                Segment: null,
                 Date: this.GetDanfeDate.run(dom),
                 Value: this.GetDanfeValue.run(dom),
                 Items: this.ExtractItems.run(dom),

@@ -26,3 +26,28 @@ export function formatCnpj(cnpj: string): string {
 
     return digits.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")
 }
+
+/**
+ * Competência da nota (`YYYY-MM`) a partir da chave de acesso.
+ *
+ * Mesmo raciocínio do CNPJ: os dígitos 3 a 6 da chave **são** o `AAMM` da emissão, então o mês
+ * sai de graça, sem consultar o SEFAZ. Não substitui a `Date` da nota (que tem dia e hora), mas
+ * permite filtrar por período antes de qualquer requisição.
+ *
+ * O século é fixo em 20: a NF-e começou em 2006 e a chave só carrega dois dígitos de ano.
+ */
+export function periodFromDanfe(danfe: string): string | undefined {
+    const aamm = danfe.slice(2, 6)
+
+    if (!/^\d{4}$/.test(aamm)) {
+        return undefined
+    }
+
+    const month = Number(aamm.slice(2))
+
+    if (month < 1 || month > 12) {
+        return undefined
+    }
+
+    return `20${aamm.slice(0, 2)}-${aamm.slice(2)}`
+}

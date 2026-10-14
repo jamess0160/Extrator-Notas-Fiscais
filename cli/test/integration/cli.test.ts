@@ -4,7 +4,7 @@ import path from "node:path"
 import { promisify } from "node:util"
 import { startFakeSefaz, type FakeSefaz } from "../helpers/fakeSefaz"
 import { KEYS } from "../helpers/fixtures"
-import type { BatchResult } from "../../src/types"
+import type { BatchResult, ScanResult } from "../../src/types"
 
 const run = promisify(execFile)
 
@@ -29,6 +29,7 @@ async function runCli(fake: Pick<FakeSefaz, "url" | "cnpjUrl">, args: string[]):
                 SEFAZ_URL: fake.url,
                 CNPJ_API_URL: fake.cnpjUrl,
                 SEFAZ_TIMEOUT_MS: "5000",
+                CNPJ_CACHE: "off",
             },
             maxBuffer: 50 * 1024 * 1024,
         })
@@ -123,6 +124,50 @@ describe("conformidade da CLI com o contrato", () => {
         })
     })
 
+    describe("comandos", () => {
+
+        /**
+         * A forma sem comando é a que já está distribuída por aí. Quebrá-la obrigaria quem tem a
+         * versão anterior da skill a atualizar o SKILL.md antes de conseguir consultar qualquer
+         * nota — e a mensagem de erro não diria isso.
+         */
+        it("trata chave sem comando como full, para não quebrar o que já está instalado", async () => {
+            const { code, stdout } = await runCli(fake, [KEYS.alimentos3])
+
+            expect(code).toBe(0)
+            expect((JSON.parse(stdout) as BatchResult).Results[0]).toHaveProperty("Items")
+            expect(fake.requests).toEqual([KEYS.alimentos3])
+        })
+
+        it("aceita o full explícito, com o mesmo resultado", async () => {
+            const { code, stdout } = await runCli(fake, ["full", KEYS.alimentos3])
+
+            expect(code).toBe(0)
+            expect((JSON.parse(stdout) as BatchResult).Results[0]).toHaveProperty("Items")
+            expect(fake.requests).toEqual([KEYS.alimentos3])
+        })
+
+        it("roda o scan sem tocar o SEFAZ", async () => {
+            const { code, stdout } = await runCli(fake, ["scan", KEYS.alimentos3, KEYS.mercado5])
+
+            const result = JSON.parse(stdout) as ScanResult
+
+            expect(code).toBe(0)
+            expect(fake.requests).toEqual([])
+            expect(Object.keys(result))
+                .toEqual(["Total", "Success", "Failed", "Resolved", "Unresolved", "Segments", "Results"])
+            expect(result.Segments.map((group) => group.Segment)).toEqual(["Restaurante", "Supermercado"])
+        })
+
+        it("sai com 1 quando o comando vem sem chave nenhuma", async () => {
+            const { code, stdout, stderr } = await runCli(fake, ["scan"])
+
+            expect(code).toBe(1)
+            expect(stdout).toBe("")
+            expect(stderr).toContain("Uso:")
+        })
+    })
+
     it("sai com 1 e mostra o uso quando não recebe chave", async () => {
         const { code, stdout, stderr } = await runCli(fake, [])
 
@@ -171,6 +216,10 @@ describe("conformidade da CLI com o contrato", () => {
             Cnpj: "88212113025439",
             Company: "COMERCIO DE MEDICAMENTOS BRAIR LTDA",
             TradeName: null,
+            // A fixture da farmácia é o caso de cadastro indisponível: o servidor falso não tem
+            // CNAE para esse CNPJ porque a BrasilAPI também não tem.
+            Cnae: null,
+            Segment: null,
             Date: "2025-10-31T12:56:53",
             Value: 19.9,
             Items: [{

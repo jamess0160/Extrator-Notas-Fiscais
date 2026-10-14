@@ -9560,11 +9560,11 @@ var require_mime_types = __commonJS({
       }
       return exts[0];
     }
-    function lookup(path2) {
-      if (!path2 || typeof path2 !== "string") {
+    function lookup(path4) {
+      if (!path4 || typeof path4 !== "string") {
         return false;
       }
-      var extension2 = extname("x." + path2).toLowerCase().substr(1);
+      var extension2 = extname("x." + path4).toLowerCase().substr(1);
       if (!extension2) {
         return false;
       }
@@ -10669,11 +10669,11 @@ var require_form_data = __commonJS({
     "use strict";
     var CombinedStream = require_combined_stream();
     var util4 = require("util");
-    var path2 = require("path");
+    var path4 = require("path");
     var http3 = require("http");
     var https2 = require("https");
     var parseUrl2 = require("url").parse;
-    var fs = require("fs");
+    var fs2 = require("fs");
     var Stream = require("stream").Stream;
     var crypto2 = require("crypto");
     var mime = require_mime_types();
@@ -10743,7 +10743,7 @@ var require_form_data = __commonJS({
         if (value.end != void 0 && value.end != Infinity && value.start != void 0) {
           callback(null, value.end + 1 - (value.start ? value.start : 0));
         } else {
-          fs.stat(value.path, function(err, stat) {
+          fs2.stat(value.path, function(err, stat) {
             if (err) {
               callback(err);
               return;
@@ -10800,11 +10800,11 @@ var require_form_data = __commonJS({
     FormData3.prototype._getContentDisposition = function(value, options) {
       var filename;
       if (typeof options.filepath === "string") {
-        filename = path2.normalize(options.filepath).replace(/\\/g, "/");
+        filename = path4.normalize(options.filepath).replace(/\\/g, "/");
       } else if (options.filename || value && (value.name || value.path)) {
-        filename = path2.basename(options.filename || value && (value.name || value.path));
+        filename = path4.basename(options.filename || value && (value.name || value.path));
       } else if (value && value.readable && hasOwn(value, "httpVersion")) {
-        filename = path2.basename(value.client._httpMessage.path || "");
+        filename = path4.basename(value.client._httpMessage.path || "");
       }
       if (filename) {
         return 'filename="' + escapeHeaderParam(filename) + '"';
@@ -11465,7 +11465,7 @@ var require_has_flag = __commonJS({
 var require_supports_color = __commonJS({
   "node_modules/supports-color/index.js"(exports2, module2) {
     "use strict";
-    var os = require("os");
+    var os2 = require("os");
     var tty = require("tty");
     var hasFlag = require_has_flag();
     var { env } = process;
@@ -11513,7 +11513,7 @@ var require_supports_color = __commonJS({
         return min;
       }
       if (process.platform === "win32") {
-        const osRelease = os.release().split(".");
+        const osRelease = os2.release().split(".");
         if (Number(osRelease[0]) >= 10 && Number(osRelease[2]) >= 10586) {
           return Number(osRelease[2]) >= 14931 ? 3 : 2;
         }
@@ -12802,10 +12802,10 @@ var require_reach = __commonJS({
       }
       const isChainArray = Array.isArray(chain);
       Assert(!isChainArray || !options.separator, "Separator option is not valid for array-based chain");
-      const path2 = isChainArray ? chain : chain.split(options.separator || ".");
+      const path4 = isChainArray ? chain : chain.split(options.separator || ".");
       let ref = obj;
-      for (let i = 0; i < path2.length; ++i) {
-        let key = path2[i];
+      for (let i = 0; i < path4.length; ++i) {
+        let key = path4[i];
         const type = options.iterables && internals.iterables(ref);
         if (Array.isArray(ref) || type === "set") {
           const number = Number(key);
@@ -12815,7 +12815,7 @@ var require_reach = __commonJS({
         }
         if (!ref || typeof ref === "function" && options.functions === false || // Defaults to true
         !type && ref[key] === void 0) {
-          Assert(!options.strict || i + 1 === path2.length, "Missing segment", key, "in reach path ", chain);
+          Assert(!options.strict || i + 1 === path4.length, "Missing segment", key, "in reach path ", chain);
           Assert(typeof ref === "object" || options.functions === true || typeof ref !== "function", "Invalid segment", key, "in reach path ", chain);
           ref = options.default;
           break;
@@ -13144,8 +13144,8 @@ var require_applyToDefaults = __commonJS({
       const nullOverride = options.nullOverride !== void 0 ? options.nullOverride : false;
       return Merge(copy, source, { nullOverride, mergeArrays: false });
     };
-    internals.reachCopy = function(dst, src, path2) {
-      for (const segment of path2) {
+    internals.reachCopy = function(dst, src, path4) {
+      for (const segment of path4) {
         if (!(segment in src)) {
           return;
         }
@@ -13157,14 +13157,14 @@ var require_applyToDefaults = __commonJS({
       }
       const value = src;
       let ref = dst;
-      for (let i = 0; i < path2.length - 1; ++i) {
-        const segment = path2[i];
+      for (let i = 0; i < path4.length - 1; ++i) {
+        const segment = path4[i];
         if (typeof ref[segment] !== "object") {
           ref[segment] = {};
         }
         ref = ref[segment];
       }
-      ref[path2[path2.length - 1]] = value;
+      ref[path4[path4.length - 1]] = value;
     };
   }
 });
@@ -14542,14 +14542,14 @@ var require_annotate = __commonJS({
       for (let i = this.details.length - 1; i >= 0; --i) {
         const pos = i + 1;
         const error = this.details[i];
-        const path2 = error.path;
+        const path4 = error.path;
         let node = obj;
         for (let j = 0; ; ++j) {
-          const seg = path2[j];
+          const seg = path4[j];
           if (Common.isSchema(node)) {
             node = node.clone();
           }
-          if (j + 1 < path2.length && typeof node[seg] !== "string") {
+          if (j + 1 < path4.length && typeof node[seg] !== "string") {
             node = node[seg];
           } else {
             const refAnnotations = node[internals.annotations] || { errors: {}, missing: {} };
@@ -14706,9 +14706,9 @@ var require_errors = __commonJS({
         return exports2.template(this.value, messages, code || this.code, this.state, this.prefs);
       }
     };
-    exports2.path = function(path2) {
+    exports2.path = function(path4) {
       let label = "";
-      for (const segment of path2) {
+      for (const segment of path4) {
         if (typeof segment === "object") {
           continue;
         }
@@ -14754,11 +14754,11 @@ var require_errors = __commonJS({
       if (flags.label) {
         return flags.label;
       }
-      let path2 = state.path;
+      let path4 = state.path;
       if (prefs.errors.label === "key" && state.path.length > 1) {
-        path2 = state.path.slice(-1);
+        path4 = state.path.slice(-1);
       }
-      const normalized = exports2.path(path2);
+      const normalized = exports2.path(path4);
       if (normalized) {
         return normalized;
       }
@@ -16752,7 +16752,7 @@ var require_trace = __commonJS({
         }
       }
       _scan(schema, _path) {
-        const path2 = _path || [];
+        const path4 = _path || [];
         let log = this._sources.get(schema);
         if (!log) {
           log = {
@@ -16764,12 +16764,12 @@ var require_trace = __commonJS({
           };
           this._sources.set(schema, log);
         }
-        if (path2.length) {
-          log.paths.add(path2);
+        if (path4.length) {
+          log.paths.add(path4);
         }
         const each = (sub, source) => {
           const subId = internals.id(sub, source);
-          this._scan(sub, path2.concat(subId));
+          this._scan(sub, path4.concat(subId));
         };
         schema.$_modify({ each, ref: false });
       }
@@ -16778,10 +16778,10 @@ var require_trace = __commonJS({
       }
     };
     internals.message = function(item) {
-      const path2 = item.paths ? Errors.path(item.paths[0]) + (item.rule ? ":" : "") : "";
-      return `${path2}${item.rule || ""} (${item.status})`;
+      const path4 = item.paths ? Errors.path(item.paths[0]) + (item.rule ? ":" : "") : "";
+      return `${path4}${item.rule || ""} (${item.status})`;
     };
-    internals.id = function(schema, { source, name, path: path2, key }) {
+    internals.id = function(schema, { source, name, path: path4, key }) {
       if (schema._flags.id) {
         return schema._flags.id;
       }
@@ -16790,14 +16790,14 @@ var require_trace = __commonJS({
       }
       name = `@${name}`;
       if (source === "terms") {
-        return [name, path2[Math.min(path2.length - 1, 1)]];
+        return [name, path4[Math.min(path4.length - 1, 1)]];
       }
       return name;
     };
     internals.sub = function(paths, skipped) {
-      for (const path2 of paths) {
+      for (const path4 of paths) {
         for (const skip of skipped) {
-          if (deepEqual(path2.slice(0, skip.length), skip)) {
+          if (deepEqual(path4.slice(0, skip.length), skip)) {
             return true;
           }
         }
@@ -16851,8 +16851,8 @@ var require_modify = __commonJS({
           this._byKey.set(key, value);
         }
       }
-      fork(path2, adjuster, root) {
-        const chain = this._collect(path2);
+      fork(path4, adjuster, root) {
+        const chain = this._collect(path4);
         chain.push({ schema: root });
         const tail = chain.shift();
         let adjusted = { id: tail.id, schema: adjuster(tail.schema) };
@@ -16862,24 +16862,24 @@ var require_modify = __commonJS({
         }
         return adjusted.schema;
       }
-      labels(path2, behind = []) {
-        const current = path2[0];
+      labels(path4, behind = []) {
+        const current = path4[0];
         const node = this._get(current);
         if (!node) {
-          return [...behind, ...path2].join(".");
+          return [...behind, ...path4].join(".");
         }
-        const forward = path2.slice(1);
+        const forward = path4.slice(1);
         behind = [...behind, node.schema._flags.label || current];
         if (!forward.length) {
           return behind.join(".");
         }
         return node.schema._ids.labels(forward, behind);
       }
-      reach(path2, behind = []) {
-        const current = path2[0];
+      reach(path4, behind = []) {
+        const current = path4[0];
         const node = this._get(current);
-        assert(node, "Schema does not contain path", [...behind, ...path2].join("."));
-        const forward = path2.slice(1);
+        assert(node, "Schema does not contain path", [...behind, ...path4].join("."));
+        const forward = path4.slice(1);
         if (!forward.length) {
           return node.schema;
         }
@@ -16910,12 +16910,12 @@ var require_modify = __commonJS({
         this._byKey = /* @__PURE__ */ new Map();
         this._schemaChain = false;
       }
-      _collect(path2, behind = [], nodes = []) {
-        const current = path2[0];
+      _collect(path4, behind = [], nodes = []) {
+        const current = path4[0];
         const node = this._get(current);
-        assert(node, "Schema does not contain path", [...behind, ...path2].join("."));
+        assert(node, "Schema does not contain path", [...behind, ...path4].join("."));
         nodes = [node, ...nodes];
-        const forward = path2.slice(1);
+        const forward = path4.slice(1);
         if (!forward.length) {
           return nodes;
         }
@@ -16973,7 +16973,7 @@ var require_modify = __commonJS({
       return obj;
     };
     internals.scan = function(item, source, options, _path, _key) {
-      const path2 = _path || [];
+      const path4 = _path || [];
       if (item === null || typeof item !== "object") {
         return;
       }
@@ -16981,7 +16981,7 @@ var require_modify = __commonJS({
       if (Array.isArray(item)) {
         for (let i = 0; i < item.length; ++i) {
           const key = source.source === "terms" && source.name === "keys" && item[i].key;
-          const result = internals.scan(item[i], source, options, [i, ...path2], key);
+          const result = internals.scan(item[i], source, options, [i, ...path4], key);
           if (result !== void 0) {
             clone = clone || item.slice();
             clone[i] = result;
@@ -16990,7 +16990,7 @@ var require_modify = __commonJS({
         return clone;
       }
       if (options.schema !== false && Common.isSchema(item) || options.ref !== false && Ref.isRef(item)) {
-        const result = options.each(item, { ...source, path: path2, key: _key });
+        const result = options.each(item, { ...source, path: path4, key: _key });
         if (result === item) {
           return;
         }
@@ -17000,7 +17000,7 @@ var require_modify = __commonJS({
         if (key[0] === "_") {
           continue;
         }
-        const result = internals.scan(item[key], source, options, [key, ...path2], _key);
+        const result = internals.scan(item[key], source, options, [key, ...path4], _key);
         if (result !== void 0) {
           clone = clone || Object.assign({}, item);
           clone[key] = result;
@@ -17021,15 +17021,15 @@ var require_state2 = __commonJS({
       value: /* @__PURE__ */ Symbol("value")
     };
     module2.exports = internals.State = class {
-      constructor(path2, ancestors, state) {
-        this.path = path2;
+      constructor(path4, ancestors, state) {
+        this.path = path4;
         this.ancestors = ancestors;
         this.mainstay = state.mainstay;
         this.schemas = state.schemas;
         this.debug = null;
       }
-      localize(path2, ancestors = null, schema = null) {
-        const state = new internals.State(path2, ancestors, this);
+      localize(path4, ancestors = null, schema = null) {
+        const state = new internals.State(path4, ancestors, this);
         if (schema && state.schemas) {
           state.schemas = [internals.schemas(schema), ...state.schemas];
         }
@@ -17076,17 +17076,17 @@ var require_state2 = __commonJS({
       constructor() {
         this._values = null;
       }
-      set(path2, value, reason) {
-        if (!path2.length) {
+      set(path4, value, reason) {
+        if (!path4.length) {
           return;
         }
-        if (reason === "strip" && typeof path2[path2.length - 1] === "number") {
+        if (reason === "strip" && typeof path4[path4.length - 1] === "number") {
           return;
         }
         this._values = this._values || /* @__PURE__ */ new Map();
         let node = this._values;
-        for (let i = 0; i < path2.length; ++i) {
-          const segment = path2[i];
+        for (let i = 0; i < path4.length; ++i) {
+          const segment = path4[i];
           let next = node.get(segment);
           if (!next) {
             next = /* @__PURE__ */ new Map();
@@ -17096,24 +17096,24 @@ var require_state2 = __commonJS({
         }
         node[internals.value] = value;
       }
-      get(path2) {
-        const node = this.node(path2);
+      get(path4) {
+        const node = this.node(path4);
         if (node) {
           return node[internals.value];
         }
       }
-      node(path2) {
+      node(path4) {
         if (!this._values) {
           return;
         }
-        return reach(this._values, path2, { iterables: true });
+        return reach(this._values, path4, { iterables: true });
       }
-      override(path2, node) {
+      override(path4, node) {
         if (!this._values) {
           return;
         }
-        const parents = path2.slice(0, -1);
-        const own2 = path2[path2.length - 1];
+        const parents = path4.slice(0, -1);
+        const own2 = path4[path4.length - 1];
         const parent = reach(this._values, parents, { iterables: true });
         if (node) {
           parent.set(own2, node);
@@ -17179,17 +17179,17 @@ var require_validator = __commonJS({
         let root = result.value;
         const errors = [];
         for (const external of mainstay.externals) {
-          const path2 = external.state.path;
+          const path4 = external.state.path;
           const linked = external.schema.type === "link" ? mainstay.links.get(external.schema) : null;
           let node = root;
           let key;
           let parent;
-          const ancestors = path2.length ? [root] : [];
-          const original = path2.length ? reach(value, path2) : value;
-          if (path2.length) {
-            key = path2[path2.length - 1];
+          const ancestors = path4.length ? [root] : [];
+          const original = path4.length ? reach(value, path4) : value;
+          if (path4.length) {
+            key = path4[path4.length - 1];
             let current = root;
-            for (const segment of path2.slice(0, -1)) {
+            for (const segment of path4.slice(0, -1)) {
               current = current[segment];
               ancestors.unshift(current);
             }
@@ -18231,16 +18231,16 @@ var require_base = __commonJS({
         assert(!options.base, "Cannot extend type with another base");
         return Extend.type(this, options);
       }
-      extract(path2) {
-        path2 = Array.isArray(path2) ? path2 : path2.split(".");
-        return this._ids.reach(path2);
+      extract(path4) {
+        path4 = Array.isArray(path4) ? path4 : path4.split(".");
+        return this._ids.reach(path4);
       }
       fork(paths, adjuster) {
         assert(!this._inRuleset(), "Cannot fork inside a ruleset");
         let obj = this;
-        for (let path2 of [].concat(paths)) {
-          path2 = Array.isArray(path2) ? path2 : path2.split(".");
-          obj = obj._ids.fork(path2, adjuster, obj);
+        for (let path4 of [].concat(paths)) {
+          path4 = Array.isArray(path4) ? path4 : path4.split(".");
+          obj = obj._ids.fork(path4, adjuster, obj);
         }
         obj.$_temp.ruleset = false;
         return obj;
@@ -18400,9 +18400,9 @@ var require_base = __commonJS({
       $_getRule(name) {
         return this._singleRules.get(name);
       }
-      $_mapLabels(path2) {
-        path2 = Array.isArray(path2) ? path2 : path2.split(".");
-        return this._ids.labels(path2);
+      $_mapLabels(path4) {
+        path4 = Array.isArray(path4) ? path4 : path4.split(".");
+        return this._ids.labels(path4);
       }
       $_match(value, state, prefs, overrides) {
         prefs = Object.assign({}, prefs);
@@ -18421,7 +18421,7 @@ var require_base = __commonJS({
         assert(!this._inRuleset(), "Cannot add this rule inside a ruleset");
         this._refs.reset();
         this._ids.reset();
-        const each = (item, { source, name, path: path2, key }) => {
+        const each = (item, { source, name, path: path4, key }) => {
           const family = this._definition[source][name] && this._definition[source][name].register;
           if (family !== false) {
             this.$_mutateRegister(item, { family, key });
@@ -18441,8 +18441,8 @@ var require_base = __commonJS({
       $_property(name) {
         return this._definition.properties[name];
       }
-      $_reach(path2) {
-        return this._ids.reach(path2);
+      $_reach(path4) {
+        return this._ids.reach(path4);
       }
       $_rootReferences() {
         return this._refs.roots();
@@ -18660,9 +18660,9 @@ var require_base = __commonJS({
         const mapToStandardError = (error) => {
           let issues;
           if (Errors.ValidationError.isError(error)) {
-            issues = error.details.map(({ message, path: path2 }) => ({
+            issues = error.details.map(({ message, path: path4 }) => ({
               message,
-              path: path2
+              path: path4
             }));
           } else {
             issues = [{
@@ -19281,9 +19281,9 @@ var require_array = __commonJS({
               let errored = false;
               let isValid = false;
               const key = wasArray ? i : new Number(i);
-              const path2 = [...state.path, key];
+              const path4 = [...state.path, key];
               if (!schema._flags.sparse && item === void 0) {
-                errors.push(error("array.sparse", { key, path: path2, pos: i, value: void 0 }, state.localize(path2)));
+                errors.push(error("array.sparse", { key, path: path4, pos: i, value: void 0 }, state.localize(path4)));
                 if (prefs.abortEarly) {
                   return errors;
                 }
@@ -19292,10 +19292,10 @@ var require_array = __commonJS({
               }
               const ancestors = [value, ...state.ancestors];
               for (const exclusion of schema.$_terms._exclusions) {
-                if (!exclusion.$_match(item, state.localize(path2, ancestors, exclusion), prefs, { presence: "ignore" })) {
+                if (!exclusion.$_match(item, state.localize(path4, ancestors, exclusion), prefs, { presence: "ignore" })) {
                   continue;
                 }
-                errors.push(error("array.excludes", { pos: i, value: item }, state.localize(path2)));
+                errors.push(error("array.excludes", { pos: i, value: item }, state.localize(path4)));
                 if (prefs.abortEarly) {
                   return errors;
                 }
@@ -19309,14 +19309,14 @@ var require_array = __commonJS({
               if (schema.$_terms.ordered.length) {
                 if (ordereds.length) {
                   const ordered = ordereds.shift();
-                  const res = ordered.$_validate(item, state.localize(path2, ancestors, ordered), prefs);
+                  const res = ordered.$_validate(item, state.localize(path4, ancestors, ordered), prefs);
                   if (!res.errors) {
                     if (ordered._flags.result === "strip") {
                       internals.fastSplice(value, i);
                       --i;
                       --il;
                     } else if (!schema._flags.sparse && res.value === void 0) {
-                      errors.push(error("array.sparse", { key, path: path2, pos: i, value: void 0 }, state.localize(path2)));
+                      errors.push(error("array.sparse", { key, path: path4, pos: i, value: void 0 }, state.localize(path4)));
                       if (prefs.abortEarly) {
                         return errors;
                       }
@@ -19342,7 +19342,7 @@ var require_array = __commonJS({
               const requiredChecks = [];
               let jl = requireds.length;
               for (let j = 0; j < jl; ++j) {
-                const localState = state.localize(path2, ancestors, requireds[j]);
+                const localState = state.localize(path4, ancestors, requireds[j]);
                 localState.snapshot();
                 const res = requireds[j].$_validate(item, localState, prefs);
                 requiredChecks[j] = res;
@@ -19354,7 +19354,7 @@ var require_array = __commonJS({
                   --j;
                   --jl;
                   if (!schema._flags.sparse && res.value === void 0) {
-                    errors.push(error("array.sparse", { key, path: path2, pos: i, value: void 0 }, state.localize(path2)));
+                    errors.push(error("array.sparse", { key, path: path4, pos: i, value: void 0 }, state.localize(path4)));
                     if (prefs.abortEarly) {
                       return errors;
                     }
@@ -19374,7 +19374,7 @@ var require_array = __commonJS({
                 if (previousCheck !== -1) {
                   res = requiredChecks[previousCheck];
                 } else {
-                  const localState = state.localize(path2, ancestors, inclusion);
+                  const localState = state.localize(path4, ancestors, inclusion);
                   localState.snapshot();
                   res = inclusion.$_validate(item, localState, prefs);
                   if (!res.errors) {
@@ -19384,7 +19384,7 @@ var require_array = __commonJS({
                       --i;
                       --il;
                     } else if (!schema._flags.sparse && res.value === void 0) {
-                      errors.push(error("array.sparse", { key, path: path2, pos: i, value: void 0 }, state.localize(path2)));
+                      errors.push(error("array.sparse", { key, path: path4, pos: i, value: void 0 }, state.localize(path4)));
                       errored = true;
                     } else {
                       value[i] = res.value;
@@ -19420,7 +19420,7 @@ var require_array = __commonJS({
                   --il;
                   continue;
                 }
-                errors.push(error("array.includes", { pos: i, value: item }, state.localize(path2)));
+                errors.push(error("array.includes", { pos: i, value: item }, state.localize(path4)));
                 if (prefs.abortEarly) {
                   return errors;
                 }
@@ -19553,7 +19553,7 @@ var require_array = __commonJS({
             }
             return this.$_addRule(rule);
           },
-          validate(value, { state, error, schema }, { comparator: raw, options }, { comparator, path: path2 }) {
+          validate(value, { state, error, schema }, { comparator: raw, options }, { comparator, path: path4 }) {
             const found = {
               string: /* @__PURE__ */ Object.create(null),
               number: /* @__PURE__ */ Object.create(null),
@@ -19567,7 +19567,7 @@ var require_array = __commonJS({
             const compare = comparator || deepEqual;
             const ignoreUndefined = options.ignoreUndefined;
             for (let i = 0; i < value.length; ++i) {
-              const item = path2 ? reach(value[i], path2) : value[i];
+              const item = path4 ? reach(value[i], path4) : value[i];
               const records = comparator ? found.custom : found[typeof item];
               assert(records, "Failed to find unique map container for type", typeof item);
               if (records instanceof Map) {
@@ -19582,7 +19582,7 @@ var require_array = __commonJS({
                       dupePos: current.value[1],
                       dupeValue: value[current.value[1]]
                     };
-                    if (path2) {
+                    if (path4) {
                       context.path = raw;
                     }
                     return error("array.unique", context, localState);
@@ -19597,7 +19597,7 @@ var require_array = __commonJS({
                     dupePos: records[item],
                     dupeValue: value[records[item]]
                   };
-                  if (path2) {
+                  if (path4) {
                     context.path = raw;
                   }
                   const localState = state.localize([...state.path, i], [value, ...state.ancestors]);
@@ -20468,8 +20468,8 @@ var require_keys = __commonJS({
           },
           validate(value, { error, prefs, state }, { subject, schema, message }) {
             const about = subject.resolve(value, state, prefs);
-            const path2 = Ref.isRef(subject) ? subject.absolute(state) : [];
-            if (schema.$_match(about, state.localize(path2, [value, ...state.ancestors], schema), prefs)) {
+            const path4 = Ref.isRef(subject) ? subject.absolute(state) : [];
+            if (schema.$_match(about, state.localize(path4, [value, ...state.ancestors], schema), prefs)) {
               return value;
             }
             return error("object.assert", { subject, message });
@@ -21027,7 +21027,7 @@ var require_keys = __commonJS({
         const ancestors = [value, ...state.ancestors];
         for (const key of unprocessed) {
           const item = value[key];
-          const path2 = [...state.path, key];
+          const path4 = [...state.path, key];
           for (let i = 0; i < schema.$_terms.patterns.length; ++i) {
             const pattern = schema.$_terms.patterns[i];
             if (pattern.regex) {
@@ -21042,7 +21042,7 @@ var require_keys = __commonJS({
               }
             }
             unprocessed.delete(key);
-            const localState = state.localize(path2, ancestors, { schema: pattern.rule, key });
+            const localState = state.localize(path4, ancestors, { schema: pattern.rule, key });
             const result = pattern.rule.$_validate(item, localState, prefs);
             if (result.errors) {
               if (prefs.abortEarly) {
@@ -21334,10 +21334,10 @@ var require_link = __commonJS({
         return linked._generate(value, state, prefs).schema;
       }
       const ref = schema.$_terms.link[0].ref;
-      const { perspective, path: path2 } = internals.perspective(ref, state);
+      const { perspective, path: path4 } = internals.perspective(ref, state);
       internals.assert(perspective, "which is outside of schema boundaries", ref, schema, state, prefs);
       try {
-        linked = path2.length ? perspective.$_reach(path2) : perspective;
+        linked = path4.length ? perspective.$_reach(path4) : perspective;
       } catch {
         internals.assert(false, "to non-existing schema", ref, schema, state, prefs);
       }
@@ -25162,12 +25162,15 @@ var require_lib5 = __commonJS({
 });
 
 // src/index.ts
-var import_node_path = __toESM(require("node:path"));
+var import_node_path3 = __toESM(require("node:path"));
 var import_dotenv = __toESM(require_dist());
 
 // src/config.ts
+var import_node_os = __toESM(require("node:os"));
+var import_node_path = __toESM(require("node:path"));
 var DEFAULT_SEFAZ_URL = "https://www.sefaz.rs.gov.br/ASP/AAE_ROOT/NFE/SAT-WEB-NFE-NFC_2.asp";
 var DEFAULT_CNPJ_API_URL = "https://brasilapi.com.br/api/cnpj/v1/";
+var DEFAULT_CACHE_TTL_DAYS = 30;
 function numberFromEnv(name, fallback) {
   const parsed = Number(process.env[name]);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -25188,10 +25191,32 @@ var Config = {
   },
   /** `CNPJ_LOOKUP=off` (ou `false`/`0`) desliga a consulta e mantém só a razão social. */
   get CnpjLookupEnabled() {
-    const flag = (process.env.CNPJ_LOOKUP || "").trim().toLowerCase();
-    return !["off", "false", "0", "no"].includes(flag);
+    return !isOff(process.env.CNPJ_LOOKUP);
+  },
+  /**
+   * `CNPJ_CACHE=off` desliga o cache em disco.
+   *
+   * O cache existe porque `scan` e `full` são processos separados: sem ele, decidir no meio do
+   * fluxo custaria duas consultas por CNPJ em vez de uma. Não é otimização, é o que torna o
+   * fluxo de dois passos viável.
+   */
+  get CnpjCacheEnabled() {
+    return !isOff(process.env.CNPJ_CACHE);
+  },
+  get CnpjCachePath() {
+    return process.env.CNPJ_CACHE_PATH || import_node_path.default.join(import_node_os.default.homedir(), ".extrator-nfe", "cnpj.json");
+  },
+  /**
+   * Prazo de validade das entradas. Nome fantasia e CNAE mudam raramente, mas *mudam* — e um
+   * cache sem expiração esconderia uma correção de cadastro para sempre.
+   */
+  get CnpjCacheTtlMs() {
+    return numberFromEnv("CNPJ_CACHE_TTL_DAYS", DEFAULT_CACHE_TTL_DAYS) * 24 * 60 * 60 * 1e3;
   }
 };
+function isOff(value) {
+  return ["off", "false", "0", "no"].includes((value || "").trim().toLowerCase());
+}
 
 // src/ExtractNfeData/ExtractNfeData.ts
 var import_dom_parser3 = __toESM(require_dist2());
@@ -25210,6 +25235,17 @@ function formatCnpj(cnpj) {
     return cnpj;
   }
   return digits.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+}
+function periodFromDanfe(danfe) {
+  const aamm = danfe.slice(2, 6);
+  if (!/^\d{4}$/.test(aamm)) {
+    return void 0;
+  }
+  const month = Number(aamm.slice(2));
+  if (month < 1 || month > 12) {
+    return void 0;
+  }
+  return `20${aamm.slice(0, 2)}-${aamm.slice(2)}`;
 }
 
 // node_modules/axios/lib/helpers/bind.js
@@ -26368,9 +26404,9 @@ function isVisitable(thing) {
 function removeBrackets(key) {
   return utils_default.endsWith(key, "[]") ? key.slice(0, -2) : key;
 }
-function renderKey(path2, key, dots) {
-  if (!path2) return key;
-  return path2.concat(key).map(function each(token, i) {
+function renderKey(path4, key, dots) {
+  if (!path4) return key;
+  return path4.concat(key).map(function each(token, i) {
     token = removeBrackets(token);
     return !dots && i ? "[" + token + "]" : token;
   }).join(dots ? "." : "");
@@ -26451,13 +26487,13 @@ function toFormData(obj, formData, options) {
       return currentValue;
     });
   }
-  function defaultVisitor(value, key, path2) {
+  function defaultVisitor(value, key, path4) {
     let arr = value;
     if (utils_default.isReactNative(formData) && utils_default.isReactNativeBlob(value)) {
-      formData.append(renderKey(path2, key, dots), convertValue(value));
+      formData.append(renderKey(path4, key, dots), convertValue(value));
       return false;
     }
-    if (value && !path2 && typeof value === "object") {
+    if (value && !path4 && typeof value === "object") {
       if (utils_default.endsWith(key, "{}")) {
         key = metaTokens ? key : key.slice(0, -2);
         value = stringifyWithDepthLimit(value, 1);
@@ -26476,7 +26512,7 @@ function toFormData(obj, formData, options) {
     if (isVisitable(value)) {
       return true;
     }
-    formData.append(renderKey(path2, key, dots), convertValue(value));
+    formData.append(renderKey(path4, key, dots), convertValue(value));
     return false;
   }
   const exposedHelpers = Object.assign(predicates, {
@@ -26484,17 +26520,17 @@ function toFormData(obj, formData, options) {
     convertValue,
     isVisitable
   });
-  function build(value, path2, depth = 0) {
+  function build(value, path4, depth = 0) {
     if (utils_default.isUndefined(value)) return;
     throwIfMaxDepthExceeded(depth);
     if (stack.indexOf(value) !== -1) {
-      throw new Error("Circular reference detected in " + path2.join("."));
+      throw new Error("Circular reference detected in " + path4.join("."));
     }
     stack.push(value);
     utils_default.forEach(value, function each(el, key) {
-      const result = !(utils_default.isUndefined(el) || el === null) && visitor.call(formData, el, utils_default.isString(key) ? key.trim() : key, path2, exposedHelpers);
+      const result = !(utils_default.isUndefined(el) || el === null) && visitor.call(formData, el, utils_default.isString(key) ? key.trim() : key, path4, exposedHelpers);
       if (result === true) {
-        build(el, path2 ? path2.concat(key) : [key], depth + 1);
+        build(el, path4 ? path4.concat(key) : [key], depth + 1);
       }
     });
     stack.pop();
@@ -26779,7 +26815,7 @@ var platform_default = {
 // node_modules/axios/lib/helpers/toURLEncodedForm.js
 function toURLEncodedForm(data, options) {
   return toFormData_default(data, new platform_default.classes.URLSearchParams(), {
-    visitor: function(value, key, path2, helpers) {
+    visitor: function(value, key, path4, helpers) {
       if (platform_default.isNode && utils_default.isBuffer(value)) {
         this.append(key, value.toString("base64"));
         return false;
@@ -26801,14 +26837,14 @@ function throwIfDepthExceeded(index) {
   }
 }
 function parsePropPath(name) {
-  const path2 = [];
+  const path4 = [];
   const pattern = /[^.[\]]+|\[([^.[\]]*)]/g;
   let match;
   while ((match = pattern.exec(name)) !== null) {
-    throwIfDepthExceeded(path2.length);
-    path2.push(match[0] === "[]" ? "" : match[1] || match[0]);
+    throwIfDepthExceeded(path4.length);
+    path4.push(match[0] === "[]" ? "" : match[1] || match[0]);
   }
-  return path2;
+  return path4;
 }
 function arrayToObject(arr) {
   const obj = {};
@@ -26823,12 +26859,12 @@ function arrayToObject(arr) {
   return obj;
 }
 function formDataToJSON(formData) {
-  function buildPath(path2, value, target, index) {
+  function buildPath(path4, value, target, index) {
     throwIfDepthExceeded(index);
-    let name = path2[index++];
+    let name = path4[index++];
     if (name === "__proto__") return true;
     const isNumericKey = Number.isFinite(+name);
-    const isLast = index >= path2.length;
+    const isLast = index >= path4.length;
     name = !name && utils_default.isArray(target) ? target.length : name;
     if (isLast) {
       if (utils_default.hasOwnProp(target, name)) {
@@ -26841,7 +26877,7 @@ function formDataToJSON(formData) {
     if (!utils_default.hasOwnProp(target, name) || !utils_default.isObject(target[name])) {
       target[name] = [];
     }
-    const result = buildPath(path2, value, target[name], index);
+    const result = buildPath(path4, value, target[name], index);
     if (result && utils_default.isArray(target[name])) {
       target[name] = arrayToObject(target[name]);
     }
@@ -28745,9 +28781,9 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config) {
       auth = urlUsername + ":" + urlPassword;
     }
     auth && headers.delete("authorization");
-    let path2;
+    let path4;
     try {
-      path2 = buildURL(
+      path4 = buildURL(
         parsed.pathname + parsed.search,
         own2("params"),
         own2("paramsSerializer")
@@ -28769,7 +28805,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config) {
       http2Options = Object.assign(/* @__PURE__ */ Object.create(null), http2Options, { lookup });
     }
     const options = Object.assign(/* @__PURE__ */ Object.create(null), {
-      path: path2,
+      path: path4,
       method,
       headers: toByteStringHeaderObject(headers),
       agents: { http: httpAgent, https: httpsAgent },
@@ -29185,14 +29221,14 @@ var isURLSameOrigin_default = platform_default.hasStandardBrowserEnv ? /* @__PUR
 var cookies_default = platform_default.hasStandardBrowserEnv ? (
   // Standard browser envs support document.cookie
   {
-    write(name, value, expires, path2, domain, secure, sameSite) {
+    write(name, value, expires, path4, domain, secure, sameSite) {
       if (typeof document === "undefined") return;
       const cookie = [`${name}=${encodeURIComponent(value)}`];
       if (utils_default.isNumber(expires)) {
         cookie.push(`expires=${new Date(expires).toUTCString()}`);
       }
-      if (utils_default.isString(path2)) {
-        cookie.push(`path=${path2}`);
+      if (utils_default.isString(path4)) {
+        cookie.push(`path=${path4}`);
       }
       if (utils_default.isString(domain)) {
         cookie.push(`domain=${domain}`);
@@ -30834,6 +30870,138 @@ var {
   create
 } = axios_default;
 
+// src/CnpjCache.ts
+var import_node_fs = __toESM(require("node:fs"));
+var import_node_path2 = __toESM(require("node:path"));
+var VERSION3 = 1;
+var CnpjCache = class {
+  entries;
+  warned = false;
+  get(cnpj) {
+    if (!Config.CnpjCacheEnabled) {
+      return void 0;
+    }
+    const entry = this.load()[cnpj];
+    if (!entry) {
+      return void 0;
+    }
+    if (Date.now() - entry.FetchedAt > Config.CnpjCacheTtlMs) {
+      return void 0;
+    }
+    return entry.Info;
+  }
+  set(cnpj, info) {
+    if (!Config.CnpjCacheEnabled) {
+      return;
+    }
+    const entries = this.load();
+    entries[cnpj] = { FetchedAt: Date.now(), Info: info };
+    this.save(entries);
+  }
+  load() {
+    if (this.entries) {
+      return this.entries;
+    }
+    this.entries = {};
+    try {
+      const raw = import_node_fs.default.readFileSync(Config.CnpjCachePath, "utf8");
+      const parsed = JSON.parse(raw);
+      if (parsed?.Version === VERSION3 && parsed.Entries) {
+        this.entries = parsed.Entries;
+      }
+    } catch (error) {
+      if (error?.code !== "ENOENT") {
+        this.warn(error);
+      }
+    }
+    return this.entries;
+  }
+  save(entries) {
+    const file = { Version: VERSION3, Entries: entries };
+    const target = Config.CnpjCachePath;
+    const temporary = `${target}.tmp`;
+    try {
+      import_node_fs.default.mkdirSync(import_node_path2.default.dirname(target), { recursive: true });
+      import_node_fs.default.writeFileSync(temporary, JSON.stringify(file), "utf8");
+      import_node_fs.default.renameSync(temporary, target);
+    } catch (error) {
+      this.warn(error);
+    }
+  }
+  /** Um aviso por processo: um por CNPJ transformaria disco cheio em enxurrada no stderr. */
+  warn(error) {
+    if (this.warned) {
+      return;
+    }
+    this.warned = true;
+    const detail = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`  aviso: cache de CNPJ indispon\xEDvel (${detail}); seguindo sem cache
+`);
+  }
+};
+
+// src/segment.ts
+var POR_SUBCLASSE = {
+  "4789004": "Pet shop",
+  "4729602": "Loja de conveni\xEAncia",
+  "4713004": "Loja de departamento"
+};
+var POR_CLASSE = {
+  "4711": "Supermercado",
+  "4712": "Supermercado",
+  "4713": "Loja de departamento",
+  "4721": "Padaria e doces",
+  "4722": "A\xE7ougue e peixaria",
+  "4723": "Bebidas",
+  "4724": "Hortifr\xFAti",
+  "4729": "Alimentos especializados",
+  "4731": "Combust\xEDvel e g\xE1s",
+  "4732": "Combust\xEDvel e g\xE1s",
+  "4784": "Combust\xEDvel e g\xE1s",
+  "4741": "Material de constru\xE7\xE3o",
+  "4742": "Material de constru\xE7\xE3o",
+  "4743": "Material de constru\xE7\xE3o",
+  "4744": "Material de constru\xE7\xE3o",
+  "4751": "Eletr\xF4nicos e eletrodom\xE9sticos",
+  "4752": "Eletr\xF4nicos e eletrodom\xE9sticos",
+  "4753": "Eletr\xF4nicos e eletrodom\xE9sticos",
+  "4757": "Eletr\xF4nicos e eletrodom\xE9sticos",
+  "4754": "M\xF3veis e utilidades dom\xE9sticas",
+  "4755": "M\xF3veis e utilidades dom\xE9sticas",
+  "4759": "M\xF3veis e utilidades dom\xE9sticas",
+  "4761": "Livraria e papelaria",
+  "4762": "Livraria e papelaria",
+  "4763": "Esporte e lazer",
+  "4771": "Farm\xE1cia",
+  "4772": "Cosm\xE9ticos e higiene",
+  "4773": "Sa\xFAde",
+  "4774": "Sa\xFAde",
+  "4781": "Vestu\xE1rio e cal\xE7ados",
+  "4782": "Vestu\xE1rio e cal\xE7ados",
+  "4783": "Vestu\xE1rio e cal\xE7ados",
+  "4789": "Outro",
+  "4520": "Ve\xEDculos e autope\xE7as",
+  "4530": "Ve\xEDculos e autope\xE7as",
+  "4541": "Ve\xEDculos e autope\xE7as",
+  "5611": "Restaurante",
+  "5612": "Restaurante",
+  "5620": "Restaurante"
+};
+function normalizeCnaeCode(raw) {
+  const digits = String(raw ?? "").replace(/\D/g, "");
+  if (digits.length < 6 || digits.length > 7) {
+    return void 0;
+  }
+  return digits.padStart(7, "0");
+}
+function segmentFromCnae(raw) {
+  const code = normalizeCnaeCode(raw);
+  if (!code) {
+    return null;
+  }
+  return POR_SUBCLASSE[code] ?? POR_CLASSE[code.slice(0, 4)] ?? "Outro";
+}
+
 // src/text.ts
 var NAMED_ENTITIES = {
   amp: "&",
@@ -30857,18 +31025,30 @@ function cleanText(raw) {
 
 // src/CnpjClient.ts
 var CnpjClient = class {
-  cache = /* @__PURE__ */ new Map();
-  async tradeName(cnpj) {
+  constructor(cache = new CnpjCache()) {
+    this.cache = cache;
+  }
+  cache;
+  memory = /* @__PURE__ */ new Map();
+  async info(cnpj) {
     if (!Config.CnpjLookupEnabled) {
       return null;
     }
+    const inMemory = this.memory.get(cnpj);
+    if (inMemory !== void 0) {
+      return inMemory;
+    }
     const cached = this.cache.get(cnpj);
     if (cached !== void 0) {
+      this.memory.set(cnpj, cached);
       return cached;
     }
-    const tradeName = await this.lookup(cnpj);
-    this.cache.set(cnpj, tradeName);
-    return tradeName;
+    const info = await this.lookup(cnpj);
+    this.memory.set(cnpj, info);
+    if (info) {
+      this.cache.set(cnpj, info);
+    }
+    return info;
   }
   async lookup(cnpj) {
     try {
@@ -30888,8 +31068,18 @@ var CnpjClient = class {
     const { data } = await axios_default.get(`${Config.CnpjApiUrl}${cnpj}`, {
       timeout: Config.TimeoutMs
     });
-    const fantasia = cleanText(data.nome_fantasia ?? "");
-    return fantasia === "" ? null : fantasia;
+    const code = normalizeCnaeCode(data.cnae_fiscal);
+    const description = cleanText(data.cnae_fiscal_descricao ?? "");
+    return {
+      // Cadastro sem nome fantasia é comum, sobretudo em LTDA: a Receita devolve o campo
+      // vazio. `null` significa "consultado e não existe", não "não consultei".
+      TradeName: textOrNull(data.nome_fantasia),
+      Company: textOrNull(data.razao_social),
+      // Sem código não há CNAE, mesmo que venha descrição: o código é o que a tabela de
+      // ramos consulta, e uma descrição solta não é verificável.
+      Cnae: code ? { Code: code, Description: description } : null,
+      Segment: segmentFromCnae(code)
+    };
   }
   /** Só 5xx e falha de rede valem segunda tentativa; 404 e 400 são respostas definitivas. */
   isRetriable(error) {
@@ -30903,12 +31093,16 @@ var CnpjClient = class {
     const status = axios_default.isAxiosError(error) ? error.response?.status : void 0;
     if (status !== 404) {
       const motivo = status ?? (error instanceof Error ? error.message : String(error));
-      process.stderr.write(`  aviso: nome fantasia de ${formatCnpj(cnpj)} indispon\xEDvel (${motivo})
+      process.stderr.write(`  aviso: cadastro de ${formatCnpj(cnpj)} indispon\xEDvel (${motivo})
 `);
     }
     return null;
   }
 };
+function textOrNull(raw) {
+  const text = cleanText(raw ?? "");
+  return text === "" ? null : text;
+}
 
 // src/errors.ts
 var MESSAGES = {
@@ -31237,9 +31431,12 @@ var ExtractNfeData = class {
     if (result.Valid === false) {
       return result;
     }
+    const info = await this.cnpjClient.info(result.Cnpj);
     return {
       ...result,
-      TradeName: await this.cnpjClient.tradeName(result.Cnpj)
+      TradeName: info?.TradeName ?? null,
+      Cnae: info?.Cnae ?? null,
+      Segment: info?.Segment ?? null
     };
   }
   /**
@@ -31260,6 +31457,8 @@ var ExtractNfeData = class {
         Cnpj: this.GetDanfeCnpj.run(dom) ?? cnpjFromDanfe(danfe) ?? "",
         Company: this.GetDanfeCompany.run(dom),
         TradeName: null,
+        Cnae: null,
+        Segment: null,
         Date: this.GetDanfeDate.run(dom),
         Value: this.GetDanfeValue.run(dom),
         Items: this.ExtractItems.run(dom)
@@ -31328,31 +31527,146 @@ var BatchRunner = class {
   }
 };
 
+// src/ScanRunner.ts
+var ScanRunner = class {
+  constructor(cnpjClient = new CnpjClient()) {
+    this.cnpjClient = cnpjClient;
+  }
+  cnpjClient;
+  async run(danfes) {
+    const unique = [...new Set(danfes)];
+    if (unique.length < danfes.length) {
+      process.stderr.write(`${danfes.length - unique.length} chave(s) duplicada(s) ignorada(s)
+`);
+    }
+    const items = new Array(unique.length);
+    const pending = /* @__PURE__ */ new Map();
+    unique.forEach((danfe, index) => {
+      const formatError = validateDanfe(danfe);
+      if (formatError) {
+        items[index] = failure(danfe, formatError);
+        return;
+      }
+      const cnpj = cnpjFromDanfe(danfe) ?? "";
+      items[index] = {
+        Danfe: danfe,
+        Valid: true,
+        Cnpj: cnpj,
+        Company: null,
+        TradeName: null,
+        Cnae: null,
+        Segment: null,
+        Period: periodFromDanfe(danfe) ?? null
+      };
+      const positions = pending.get(cnpj);
+      if (positions) {
+        positions.push(index);
+      } else {
+        pending.set(cnpj, [index]);
+      }
+    });
+    await this.enrich(pending, items);
+    return this.envelope(items);
+  }
+  /** Consulta cada CNPJ distinto uma vez, com a mesma concorrência do lote de notas. */
+  async enrich(pending, items) {
+    const cnpjs = [...pending.keys()];
+    let nextIndex = 0;
+    const worker = async () => {
+      while (true) {
+        const index = nextIndex++;
+        if (index >= cnpjs.length) {
+          return;
+        }
+        const cnpj = cnpjs[index];
+        process.stderr.write(`[${index + 1}/${cnpjs.length}] cadastro de ${cnpj}
+`);
+        const info = await this.cnpjClient.info(cnpj);
+        if (!info) {
+          continue;
+        }
+        for (const position of pending.get(cnpj) ?? []) {
+          const item = items[position];
+          item.Company = info.Company;
+          item.TradeName = info.TradeName;
+          item.Cnae = info.Cnae;
+          item.Segment = info.Segment;
+        }
+      }
+    };
+    const workers = Math.min(Config.Concurrency, cnpjs.length);
+    await Promise.all(Array.from({ length: workers }, worker));
+  }
+  envelope(items) {
+    const valid = items.filter((item) => item.Valid);
+    const resolved = valid.filter((item) => item.Segment !== null).length;
+    return {
+      Total: items.length,
+      Success: valid.length,
+      Failed: items.length - valid.length,
+      Resolved: resolved,
+      Unresolved: valid.length - resolved,
+      Segments: this.group(valid),
+      Results: items
+    };
+  }
+  /**
+   * Agrupa por ramo. `Danfes` leva as chaves do grupo porque é exatamente o argumento que o
+   * `full` vai receber depois do filtro — sem isso, quem consome teria que reconstruir o
+   * agrupamento para usá-lo.
+   */
+  group(valid) {
+    const groups = /* @__PURE__ */ new Map();
+    for (const item of valid) {
+      const key = item.Segment ?? "";
+      const group = groups.get(key) ?? { segment: item.Segment, cnpjs: /* @__PURE__ */ new Set(), danfes: [] };
+      group.cnpjs.add(item.Cnpj);
+      group.danfes.push(item.Danfe);
+      groups.set(key, group);
+    }
+    return [...groups.values()].map((group) => ({
+      Segment: group.segment,
+      Establishments: group.cnpjs.size,
+      Notes: group.danfes.length,
+      Danfes: group.danfes
+    })).sort((a, b) => {
+      if (a.Segment === null !== (b.Segment === null)) {
+        return a.Segment === null ? 1 : -1;
+      }
+      return b.Notes - a.Notes || String(a.Segment).localeCompare(String(b.Segment), "pt-BR");
+    });
+  }
+};
+
 // src/version.ts
-var VERSION3 = true ? "1.0.0" : fromPackageJson();
+var VERSION4 = true ? "1.1.0" : fromPackageJson();
 
 // src/index.ts
 import_dotenv.default.config({
-  path: [import_node_path.default.resolve(__dirname, "../.env"), import_node_path.default.resolve(process.cwd(), ".env")],
+  path: [import_node_path3.default.resolve(__dirname, "../.env"), import_node_path3.default.resolve(process.cwd(), ".env")],
   quiet: true
 });
 var USAGE = [
-  `Consulta de NFC-e do RS \u2014 vers\xE3o ${VERSION3}`,
+  `Consulta de NFC-e do RS \u2014 vers\xE3o ${VERSION4}`,
   "",
-  "Uso: node <cli> <chave-danfe> [chave-danfe ...]",
+  "Uso: node <cli> [comando] <chave-danfe> [chave-danfe ...]",
   "",
-  "  Consulta uma ou mais NFC-e do RS pela chave de acesso de 44 d\xEDgitos",
-  "  e escreve o JSON de resultado no stdout.",
+  "Comandos:",
+  "  scan   identifica emitente e ramo de cada nota pelo CNPJ contido na chave,",
+  "         sem consultar o SEFAZ. Serve para decidir quais notas analisar.",
+  "  full   consulta a nota inteira no SEFAZ: data, valor e itens. \xC9 o padr\xE3o",
+  "         quando nenhum comando \xE9 informado.",
   "",
   "Op\xE7\xF5es:",
   "  --version, -v   imprime a vers\xE3o e sai",
   "  --help, -h      imprime esta ajuda e sai",
   ""
 ];
+var COMMANDS = ["scan", "full"];
 async function main() {
   const args = process.argv.slice(2);
   if (args.includes("--version") || args.includes("-v")) {
-    process.stdout.write(VERSION3 + "\n");
+    process.stdout.write(VERSION4 + "\n");
     return;
   }
   if (args.includes("--help") || args.includes("-h")) {
@@ -31361,17 +31675,24 @@ async function main() {
   }
   const desconhecida = args.find((arg) => arg.startsWith("-"));
   if (desconhecida) {
-    process.stderr.write("Op\xE7\xE3o desconhecida: " + desconhecida + "\n\n" + USAGE.join("\n"));
-    process.exitCode = 1;
-    return;
+    return fail("Op\xE7\xE3o desconhecida: " + desconhecida);
   }
-  if (args.length === 0) {
+  const command = isCommand(args[0]) ? args[0] : "full";
+  const danfes = isCommand(args[0]) ? args.slice(1) : args;
+  if (danfes.length === 0) {
     process.stderr.write(USAGE.join("\n"));
     process.exitCode = 1;
     return;
   }
-  const result = await new BatchRunner().run(args);
+  const result = command === "scan" ? await new ScanRunner().run(danfes) : await new BatchRunner().run(danfes);
   process.stdout.write(JSON.stringify(result));
+}
+function isCommand(arg) {
+  return arg !== void 0 && COMMANDS.includes(arg);
+}
+function fail(message) {
+  process.stderr.write(message + "\n\n" + USAGE.join("\n"));
+  process.exitCode = 1;
 }
 main().catch((error) => {
   const message = error instanceof Error ? error.message : String(error);

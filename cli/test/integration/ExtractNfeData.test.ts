@@ -33,6 +33,10 @@ describe("ExtractNfeData contra o servidor falso", () => {
             Cnpj: "88212113025439",
             Company: "COMERCIO DE MEDICAMENTOS BRAIR LTDA",
             TradeName: null,
+            // A fixture da farmácia é o caso de cadastro indisponível: o servidor falso não tem
+            // CNAE para esse CNPJ porque a BrasilAPI também não tem.
+            Cnae: null,
+            Segment: null,
             Date: "2025-10-31T12:56:53",
             Value: 19.9,
             Items: [{

@@ -221,8 +221,11 @@ automatizá-los.
 | [test/unit/schema.test.ts](../cli/test/unit/schema.test.ts) | os três códigos e a precedência entre eles |
 | [test/unit/text-number.test.ts](../cli/test/unit/text-number.test.ts) | `cleanText`, `parsePtBrNumber` |
 | [test/unit/config.test.ts](../cli/test/unit/config.test.ts) | defaults de ambiente, sem rede |
-| [test/unit/cnpj.test.ts](../cli/test/unit/cnpj.test.ts) | CNPJ da página × CNPJ da chave, normalização, formatação |
+| [test/unit/cnpj.test.ts](../cli/test/unit/cnpj.test.ts) | CNPJ da página × CNPJ da chave, normalização, formatação, competência pelo `AAMM` |
+| [test/unit/segment.test.ts](../cli/test/unit/segment.test.ts) | CNAE → ramo, zero à esquerda, subclasse contra classe, `null` × `"Outro"` |
+| [test/unit/CnpjCache.test.ts](../cli/test/unit/CnpjCache.test.ts) | gravação entre instâncias, TTL, arquivo corrompido, versão desconhecida, só dado público |
 | [test/integration/ExtractNfeData.test.ts](../cli/test/integration/ExtractNfeData.test.ts) | `NOT_FOUND`, retry, timeout, truncado, latin-1, validação sem rede, nome fantasia (cache, 404, 500, desligado) |
 | [test/integration/BatchRunner.test.ts](../cli/test/integration/BatchRunner.test.ts) | ordem, dedupe, concorrência, isolamento de falha, envelope |
-| [test/integration/cli.test.ts](../cli/test/integration/cli.test.ts) | exit codes, vazamento de stdout, contrato campo a campo |
+| [test/integration/ScanRunner.test.ts](../cli/test/integration/ScanRunner.test.ts) | zero tráfego ao SEFAZ, 1 consulta por CNPJ, agrupamento, grupo sem ramo, validação offline |
+| [test/integration/cli.test.ts](../cli/test/integration/cli.test.ts) | exit codes, vazamento de stdout, contrato campo a campo, `scan`/`full` e a forma sem comando |
 | [test/e2e/sefaz.e2e.test.ts](../cli/test/e2e/sefaz.e2e.test.ts) | consulta real (opt-in por `RUN_E2E=1`) |

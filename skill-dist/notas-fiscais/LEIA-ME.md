@@ -1,4 +1,4 @@
-# Consulta de notas fiscais (NFC-e RS) — versão 1.0.0
+# Consulta de notas fiscais (NFC-e RS) — versão 1.1.0
 
 Skill de Claude Code que consulta notas fiscais eletrônicas de consumidor do Rio Grande do Sul pela
 chave de acesso de 44 dígitos e faz a análise financeira das compras.
@@ -66,10 +66,10 @@ Nenhuma reinstalação, nenhum build. Se preferir, apague a pasta e repita a ins
 | | |
 |---|---|
 | Código-fonte | https://github.com/jamess0160/Extrator-Notas-Fiscais |
-| Commit deste pacote | `075f551` |
-| Versão | 1.0.0 |
-| Tamanho do `notas-fiscais.cjs` | 949 KB |
-| SHA-256 do `notas-fiscais.cjs` | `ecd1f597599a1b0de325340765a9d479c20a678d4a7fb72651ff6b0516b848bd` |
+| Commit deste pacote | `59b9e6e` |
+| Versão | 1.1.0 |
+| Tamanho do `notas-fiscais.cjs` | 959 KB |
+| SHA-256 do `notas-fiscais.cjs` | `f205af75fb32d883667462db2f1a8545dd108eeb423d9c1a7db78efe45af43a7` |
 
 `notas-fiscais.cjs` **não é um binário**: é JavaScript legível, com as dependências (`axios`, `joi`,
 `dom-parser`, `dotenv`) embutidas no mesmo arquivo. Você pode abrir, ler e pesquisar nele.
@@ -79,7 +79,7 @@ exatamente o que o código-fonte público produz:
 
 ```bash
 git clone https://github.com/jamess0160/Extrator-Notas-Fiscais && cd Extrator-Notas-Fiscais
-git checkout 075f551
+git checkout 59b9e6e
 cd cli && npm install && npm run package
 # compare o sha256 impresso com o da tabela acima
 ```
@@ -98,16 +98,24 @@ essa parte, o código está aberto e é curto o suficiente para ser lido.
 ## O que o programa faz na sua máquina
 
 - **Rede:** fala com dois endereços, e só com eles — `www.sefaz.rs.gov.br`, que devolve a página
-  pública da nota, e `brasilapi.com.br`, que resolve o CNPJ do emitente em nome fantasia a partir
-  dos dados abertos da Receita Federal. A segunda consulta é opcional: com a variável de ambiente
-  `CNPJ_LOOKUP=off`, a skill usa apenas a razão social impressa na nota.
-- **Disco:** não escreve nada. Lê apenas o próprio arquivo.
+  pública da nota, e `brasilapi.com.br`, que resolve o CNPJ do emitente em nome fantasia e ramo de
+  atividade a partir dos dados abertos da Receita Federal. A segunda consulta é opcional: com a
+  variável de ambiente `CNPJ_LOOKUP=off`, a skill usa apenas a razão social impressa na nota.
+- **Disco:** escreve **um** arquivo, `~/.extrator-nfe/cnpj.json`, que é o cache das consultas de
+  CNPJ. Guarda apenas dado público de cadastro indexado por CNPJ — nome fantasia, razão social e
+  CNAE. **Nunca** chave de nota, valor ou item comprado. Apagar o arquivo é seguro, e
+  `CNPJ_CACHE=off` desliga a escrita por completo. Fora disso, só lê o próprio programa.
 - **Credenciais:** não usa nenhuma. A consulta de nota fiscal do SEFAZ é pública e não
   autenticada; a da Receita também.
 - **Telemetria:** nenhuma.
 
 As chaves que você consultar vão para o SEFAZ (que já as conhece) e o CNPJ do emitente vai para a
 BrasilAPI. Nada além disso sai da sua máquina.
+
+O cache existe porque a skill consulta em dois passos: primeiro identifica o ramo de cada
+estabelecimento — o que não exige o SEFAZ, já que o CNPJ está dentro da chave de acesso — para você
+escolher quais notas analisar, e só depois busca as notas escolhidas. Sem o cache, cada CNPJ seria
+consultado duas vezes no mesmo fluxo.
 
 ## Limites conhecidos
 

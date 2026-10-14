@@ -6,12 +6,21 @@ com o resultado de cada um.
 
 ```
 usuário → /skill <chave1> <chave2> ...
-            → SKILL.md → node cli/dist/index.js <chaves...> → JSON (dados brutos)
+            → SKILL.md → node cli/dist/index.js scan <chaves...> → ramo de cada emitente
+            → skill mostra os ramos encontrados e pergunta o que analisar
+            → usuário escolhe ("só mercado", "tudo", ...)
+            → SKILL.md → node cli/dist/index.js full <chaves filtradas> → JSON (dados brutos)
             → skill categoriza os itens e produz a análise financeira → resposta ao usuário
 ```
 
-A CLI entrega dados; a skill entrega leitura dos dados. A categorização de itens e a análise são da
-skill, não da CLI (D10) — especificadas em [analise-financeira.md](analise-financeira.md).
+A CLI entrega dados; a skill entrega leitura dos dados. A categorização de **itens** e a análise são
+da skill, não da CLI (D10) — especificadas em [analise-financeira.md](analise-financeira.md). O
+**ramo do estabelecimento** é a exceção deliberada e fica na CLI: é consulta a tabela de CNAE, não
+interpretação de texto.
+
+O `scan` não consulta o SEFAZ — o CNPJ está dentro da própria chave de acesso —, então o passo de
+decisão é barato: 20 notas de 6 estabelecimentos custam 6 consultas de cadastro e nenhuma
+requisição ao SEFAZ.
 
 ## Etapas
 
@@ -43,7 +52,10 @@ Módulos em [cli/src/](../cli/src/):
 | [BatchRunner.ts](../cli/src/BatchRunner.ts) | dedupe, concorrência, envelope, isolamento de falha |
 | [ExtractNfeData/ExtractNfeData.ts](../cli/src/ExtractNfeData/ExtractNfeData.ts) | valida → busca → extrai; `run` nunca lança |
 | [SefazClient.ts](../cli/src/SefazClient.ts) | POST, timeout, 1 retry, decodificação |
-| [CnpjClient.ts](../cli/src/CnpjClient.ts) | CNPJ → nome fantasia, com cache por lote; falha nunca invalida a nota |
+| [ScanRunner.ts](../cli/src/ScanRunner.ts) | comando `scan`: CNPJ a partir da chave, 1 consulta por CNPJ, agrupamento por ramo |
+| [CnpjClient.ts](../cli/src/CnpjClient.ts) | CNPJ → nome fantasia, razão social, CNAE e ramo; falha nunca invalida a nota |
+| [CnpjCache.ts](../cli/src/CnpjCache.ts) | cache em disco das consultas de CNPJ, compartilhado entre invocações |
+| [segment.ts](../cli/src/segment.ts) | CNAE → ramo, pela lista oficial do IBGE |
 | [schema.ts](../cli/src/schema.ts) | schema Joi da chave e mapeamento para os códigos de erro |
 | [types.ts](../cli/src/types.ts) | tipos do contrato (substituíram o `CliTypes` obsoleto) |
 | [errors.ts](../cli/src/errors.ts) · [text.ts](../cli/src/text.ts) · [number.ts](../cli/src/number.ts) · [decode.ts](../cli/src/decode.ts) · [config.ts](../cli/src/config.ts) | mensagens pt-BR, entidades HTML, números pt-BR, charset, env |
@@ -68,7 +80,7 @@ público. Ver [instalacao-skill.md](instalacao-skill.md).
   DANFE: 6 arquivos, todos do RS — 5 notas válidas (de 1 a 22 itens, supermercado e farmácia) e 1
   de nota inexistente.
 - `joi` e `dotenv` instalados; scripts `build`, `build:watch` e `start` no `package.json`.
-- Suíte com **132 testes** em `cli/test/`, rodando sem internet contra um servidor HTTP falso:
+- Suíte com **171 testes** em `cli/test/`, rodando sem internet contra um servidor HTTP falso:
   `cd cli && npm test` (type-check → build → jest). A consulta real ao SEFAZ fica atrás de
   `npm run test:e2e`. Não há linter configurado.
 - Para instalar numa máquina nova: [instalacao-skill.md](instalacao-skill.md).

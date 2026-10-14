@@ -20,6 +20,28 @@ export const TRADE_NAMES: Record<string, string> = {
     "21387187000106": "MULTIMERCADOS VILLAGIO",
 }
 
+/**
+ * CNAE real de cada CNPJ, conferido na BrasilAPI. Reproduz o formato da API, inclusive o código
+ * como **número** — é dele que vem a necessidade do zero à esquerda em `normalizeCnaeCode`.
+ *
+ * O CNPJ da farmácia (`88212113025439`) não está aqui de propósito: a BrasilAPI devolve 503 para
+ * ele de verdade, e o caminho de cadastro indisponível precisa de um caso real.
+ */
+export const CNAES: Record<string, { codigo: number, descricao: string }> = {
+    "06348488000390": {
+        codigo: 4711302,
+        descricao: "Comércio varejista de mercadorias em geral, com predominância de produtos alimentícios - supermercados",
+    },
+    "11578660000170": {
+        codigo: 5611203,
+        descricao: "Lanchonetes, casas de chá, de sucos e similares",
+    },
+    "21387187000106": {
+        codigo: 4711302,
+        descricao: "Comércio varejista de mercadorias em geral, com predominância de produtos alimentícios - supermercados",
+    },
+}
+
 export type CnpjMode = "ok" | "404" | "500" | "vazio"
 
 export interface FakeSefaz {
@@ -141,9 +163,15 @@ export async function startFakeSefaz(): Promise<FakeSefaz> {
         }
 
         const fantasia = cnpjMode === "vazio" ? "" : TRADE_NAMES[cnpj] ?? ""
+        const cnae = cnpjMode === "vazio" ? undefined : CNAES[cnpj]
 
         response.writeHead(200, { "Content-Type": "application/json" })
-        response.end(JSON.stringify({ nome_fantasia: fantasia, razao_social: "RAZAO SOCIAL LTDA" }))
+        response.end(JSON.stringify({
+            nome_fantasia: fantasia,
+            razao_social: "RAZAO SOCIAL LTDA",
+            cnae_fiscal: cnae?.codigo,
+            cnae_fiscal_descricao: cnae?.descricao,
+        }))
     }
 
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
