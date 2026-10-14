@@ -1,0 +1,426 @@
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="cache-control" content="no-cache" />
+    <meta http-equiv="Expires" content="-1" />
+    <title>Público em Geral / Nota Fiscal Eletrônica / Consulta Completa da NFC-e</title>
+    <link type="text/css" rel="stylesheet" href="../../include/sefazNFE.css" />
+    <link type="text/css" rel="stylesheet" href="../../include/estilo_aaeNFE.css" />
+    <link type="text/css" rel="stylesheet" href="../../include/AAENovo.css" />
+    <link type="text/css" rel="stylesheet" href="tableNFe.css" />
+
+    <script type="text/javascript" src="../../include/SEF_funcoes.js"></script>
+
+    <script type="text/javascript">
+
+        var naoimprimirTitulo = true;
+        var botaovoltar = true;
+
+        function trocaAba(aba) {
+            form1.aba.value = aba;
+            form1.submit();
+        }
+
+        //retorna imagem adequada, ou logo NF-e ou brasao RS
+        function imagemLogo() {
+            if(getUf()['uf'] == 'RS') return 'brasao_rs_small.png';
+            return 'logo_nfe_p.gif';
+        }
+        
+        //retorna UF para layout de impressão
+        function getUf() {
+            var uf = '43261006348488000390651060003029821903594352'.substring(0,2);
+            switch (uf) {
+                case '12': return {'uf':'AC', 'ext':'do Acre' };
+                case '27': return {'uf':'AL', 'ext':'de Alagoas' };
+                case '13': return {'uf':'AM', 'ext':'do Amapá' };
+                case '16': return {'uf':'AP', 'ext':'do Amazonas' };
+                case '29': return {'uf':'BA', 'ext':'da Bahia' };
+                case '23': return {'uf':'CE', 'ext':'do Ceará' };
+                case '53': return {'uf':'DF', 'ext':'do Distrito Federal' };
+                case '32': return {'uf':'ES', 'ext':'do Espírito Santo' };
+                case '52': return {'uf':'GO', 'ext':'de Goiás' };
+                case '21': return {'uf':'MA', 'ext':'do Maranhão' };
+                case '31': return {'uf':'MG', 'ext':'do Mato Grosso' };
+                case '50': return {'uf':'MS', 'ext':'do Mato Grosso do Sul' };
+                case '51': return {'uf':'MT', 'ext':'de Minas Gerais' };
+                case '15': return {'uf':'PA', 'ext':'da Paraíba' };
+                case '25': return {'uf':'PB', 'ext':'do Paraná' };
+                case '26': return {'uf':'PE', 'ext':'de Pernambuco' };
+                case '22': return {'uf':'PI', 'ext':'do Piauí' };
+                case '41': return {'uf':'PR', 'ext':'do Paraná' };
+                case '33': return {'uf':'RJ', 'ext':'do Rio de Janeiro' };
+                case '24': return {'uf':'RN', 'ext':'do Rio Grande do Norte' };
+                case '11': return {'uf':'RO', 'ext':'de Rondônia' };
+                case '14': return {'uf':'RR', 'ext':'de Roraima' };
+                case '43': return {'uf':'RS', 'ext':'do Rio Grande do Sul' };
+                case '42': return {'uf':'SC', 'ext':'de Santa Catarina' };
+                case '28': return {'uf':'SE', 'ext':'de Sergipe' };
+                case '35': return {'uf':'SP', 'ext':'de São Paulo' };
+                case '17': return {'uf':'TO', 'ext':'do Tocantins' };
+            }
+        }
+        
+        function imprimirNFe() {
+            var dataAtual = new Date();
+            var janela = window.open('', 'winNFeCompleta', 'top=50,left=50,width=600,height=650,scrollbars=yes');
+            var HTML = '<html>';
+            
+            HTML += '<LINK rel=\"STYLESHEET\" href=\"Estilos/nfe-vis.css\" type=\"text/css\">';
+            HTML += '<style type"text/css" media="print">';
+            HTML +=     '.notprint {overflow: hidden;display: none;}';
+            HTML += '</style>';
+            HTML += '<style type="text/css">';
+            HTML +=     '.toggle { background-image:none !important; }';
+            HTML +=     '.toggable { display: block !important; }';
+            HTML += '</style>';
+            HTML += '<title>Impressão NFC-e</title><body><div class="notprint"><input type="button" value="Imprimir" onClick="window.print();">&nbsp;&nbsp;&nbsp;<input type="button" value="Fechar" onClick="window.close();"><hr noshade></div>';
+            HTML += '<table width="500" align="center" border="0" cellpadding="0" cellspacing="0" class="textoVerdana9bold">';
+            HTML += '<tr><td width="70" align="center"><img src="Imagens/' + imagemLogo() + '" height="67"></td>';
+            HTML += '<td align="center" valign="middle"><strong>GOVERNO DO ESTADO ' + getUf()['ext'].toUpperCase() + '<br>SECRETARIA DA FAZENDA<br><br>DANFE NFC-e - Nota Fiscal do Consumidor Eletrônica<br>Impresso ' + dataAtual.toLocaleDateString() + ' às ' + dataAtual.toLocaleTimeString() + '</strong></td></tr></table><br>';
+            HTML += document.getElementById('nfce').innerHTML;
+            HTML += '<br />';
+            HTML += '<tr> <td align="left" style="padding-left:23px"><br /><table><tr><td width="200"><b>Administração Tributária:</b>';
+            HTML += '</td><td>&nbsp;Receita Estadual RS</td></tr><tr><td><b>Data/Hora da Consulta:</b></td>';
+            HTML += '<td>&nbsp;14/10/2026&nbsp;09:13:12</td></tr></table></td></tr>';
+            HTML += '</body></html>';
+            
+            janela.document.write(HTML); 
+            janela.document.close();
+        }
+        
+        function abrirAutorizacaoUso() {
+            var par = '?chaveNFe=43261006348488000390651060003029821903594352';
+            par += '&HML=false';
+            par += '&acao=AUT';
+            par += '&MsgUsuario=';
+            
+            window.open('SAT-WEB-NFE_IMPRESSAO.asp' + par, 'autorizacaoUso', 'top=50,left=50,width=760,height=600,scrollbars=yes');
+        }
+        
+        function novaConsulta(){
+           
+            self.location='SAT-WEB-NFE-NFC_1.asp'
+        }
+        
+        function visualizarAbas() {
+            var chave = '43261006348488000390651060003029821903594352';
+            var url = 'https://dfe-portal.svrs.rs.gov.br/Nfce/Consulta?chDfe=' + encodeURIComponent(chave);
+            window.open(url, '_blank');
+        }
+        
+    </script>
+</head>
+<body style="margin: 0px;">
+
+    <script type="text/javascript" src="../../include/AAE_Cabecalho.js"></script>
+
+        <div id="nfce">
+           <table width="500px" id="respostaWS" cellspacing="0" cellpadding="5" border="0">
+            <tr>
+                <td valign="top">
+                
+                 <?xml version="1.0" encoding="utf-8"?><link rel="stylesheet" type="text/css" href="https://nfe-extranet.sefazrs.rs.gov.br/ws/consNFCeXslt/css/sefaz_nfce.css" xmlns:n="http://www.portalfiscal.inf.br/nfe" xmlns:chave="http://exslt.org/chaveacesso" xmlns:r="http://www.serpro.gov.br/nfe/remessanfe.xsd">
+<table width="100%" border="0" cellspacing="0" cellpadding="0" xmlns:n="http://www.portalfiscal.inf.br/nfe" xmlns:chave="http://exslt.org/chaveacesso" xmlns:r="http://www.serpro.gov.br/nfe/remessanfe.xsd">
+  <tr class="linhacabec">
+    <td><b>CONSULTA DA NFC-e</b></td>
+  </tr>
+  <tr>
+    <td><br></td>
+  </tr>
+  <tr>
+    <td style="padding-left:15px">
+      <table width="500" border="1" cellspacing="0" cellpadding="0" bordercolor="#0D000A" bgcolor="#FFFFEA">
+        <tr>
+          <td>
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td class="borda-pontilhada-botton">
+                  <table class="NFCCabecalho" border="0">
+                    <tr>
+                      <td rowspan="4" align="left"><img src="https://nfe-extranet.sefazrs.rs.gov.br/ws/consNFCeXslt/img/logoMarcaNFC.PNG" alt="NFC-e" width="80" height="50"></td>
+                      <td class="NFCCabecalho_SubTitulo" align="left">C &amp; A Comercio de Alimentos Ltda.</td>
+                    </tr>
+                    <tr>
+                      <td class="NFCCabecalho_SubTitulo1" align="left">
+                        CNPJ:
+                        06.348.488/0003-90      
+                        Inscrição Estadual: 0290640024</td>
+                    </tr>
+                  </table>
+                  <table class="NFCCabecalho" border="0">
+                    <tr>
+                      <td class="NFCCabecalho_SubTitulo1" align="left">Av. Benjamin Custodio de Oliveira,
+                        786,
+                        Charqueadas,
+                        Caxias do Sul,
+                        RS</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td class="borda-pontilhada-botton">
+                  <table class="NFCCabecalho" border="0">
+                    <tr>
+                      <td class="NFCCabecalho_Titulo NFCBold" align="center">DANFE NFC-e - Documento Auxiliar da Nota Fiscal Eletrônica para Consumidor Final - Via Consumidor</td>
+                    </tr>
+                    <tr>
+                      <td class="NFCCabecalho_SubTitulo" align="center">NFC-e não permite aproveitamento de crédito de ICMS</td>
+                    </tr>
+                    <tr>
+                      <td class="NFCCabecalho_Titulo NFCBold" align="center">Emissão normal</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <table border="0" style="width: 100%;">
+                    <tr>
+                      <td class="NFCCabecalho_SubTitulo" align="center">
+                        NFC-e nº: 302982
+                        Série: 106
+                        Data de Emissão: 07/10/2026 13:21:48</td>
+                    </tr>
+                    <tr>
+                      <td class="NFCCabecalho_SubTitulo" align="center">Consulte pela Chave de Acesso em https://www.sefaz.rs.gov.br/NFCE</td>
+                    </tr>
+                    <tr>
+                      <td class="NFCCabecalho_SubTitulo NFCBold" align="center">CHAVE DE ACESSO</td>
+                    </tr>
+                    <tr>
+                      <td class="NFCCabecalho_SubTitulo" align="center">4326 1006 3484 8800 0390 6510 6000 3029 8219 0359 4352</td>
+                    </tr>
+                    <tr>
+                      <td class="NFCCabecalho_SubTitulo" align="center">
+                        Protocolo de Autorização: 243261925353330</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td class="borda-pontilhada-top">
+                  <table border="0" style="width: 100%;">
+                    <tr>
+                      <td class="NFCCabecalho_SubTitulo NFCBold" align="center" width="290">CONSUMIDOR</td>
+                    </tr>
+                    <tr>
+                      <td class="NFCCabecalho_SubTitulo" align="left" width="300">
+                          CPF:
+                          047.834.490-23</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td class="borda-pontilhada-botton">
+                  <table class="NFCCabecalho" border="0">
+                    <tr>
+                      <td class="borda-pontilhada-3D NFCDetalhe_Item" align="left" style="width: 60px;">Código</td>
+                      <td class="borda-pontilhada-3D NFCDetalhe_Item" align="left" style="width: 230px;">Descrição</td>
+                      <td class="borda-pontilhada-3D NFCDetalhe_Item" align="center" style="width: 50px;">Qtde</td>
+                      <td class="borda-pontilhada-3D NFCDetalhe_Item" align="left" style="width: 10px;">Un</td>
+                      <td class="borda-pontilhada-3D NFCDetalhe_Item" align="right" style="width: 60px;">Vl Unit</td>
+                      <td class="borda-pontilhada-top-botton" align="right" style="width: 60px;">Vl Total</td>
+                    </tr>
+                    <tr id="Item + 1">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">62581</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">OLEO DE SOJA COAMO 900ML</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">UN</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">7,47</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">7,47</td>
+                    </tr>
+                    <tr id="Item + 2">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">744</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">AZEITE DE OLIVA ANDORINHA VIDRO EX.VIRGE</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">UN</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">21,95</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">21,95</td>
+                    </tr>
+                    <tr id="Item + 3">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">80109</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">SABAO P/MAQ.DE LAVAR LOUCA SAIF 500G</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">UN</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">26,98</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">26,98</td>
+                    </tr>
+                    <tr id="Item + 4">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">32195</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">PRESUNTO COZIDO SADIA SOLTISSIMO 200G</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">KG</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">11,99</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">11,99</td>
+                    </tr>
+                    <tr id="Item + 5">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">4623</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">DETERGENTE GIRANDO SOL NEUTRO 500ML</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">UN</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">2,39</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">2,39</td>
+                    </tr>
+                    <tr id="Item + 6">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">4622</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">DETERGENTE GIRANDO SOL NATURAL 500ML</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">UN</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">2,39</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">2,39</td>
+                    </tr>
+                    <tr id="Item + 7">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">4620</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">DETERGENTE GIRANDO SOL LIMAO 500ML</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">UN</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">2,39</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">2,39</td>
+                    </tr>
+                    <tr id="Item + 8">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">46894</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">SABONETE LUX SUAVE BOTANICALS LOTUS 85G</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">UN</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">2,97</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">2,97</td>
+                    </tr>
+                    <tr id="Item + 9">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">46893</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">SABONETE LUX SUAVE BOTANICALS ORQUIDEA N</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">UN</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">2,97</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">2,97</td>
+                    </tr>
+                    <tr id="Item + 10">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">41170</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">SABONETE LUX SUAVE BUQUE DE JASMIM 85G</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">UN</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">2,97</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">2,97</td>
+                    </tr>
+                    <tr id="Item + 11">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">61637</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">ESPONJA SCOTCH-BRITE NAO RISCA LARANJA 3</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">UN</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">11,89</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">11,89</td>
+                    </tr>
+                    <tr id="Item + 12">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">61637</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">ESPONJA SCOTCH-BRITE NAO RISCA LARANJA 3</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">UN</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">11,89</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">11,89</td>
+                    </tr>
+                    <tr id="Item + 13">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">17145</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">APARELHO BIC 3 ENCARTELADO NORMAL AZUL 2</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">UN</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">17,99</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">17,99</td>
+                    </tr>
+                    <tr id="Item + 14">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">6137</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">FLICS BLISTER TUTTI-FRUTTI 17G</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">UN</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">1,48</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">1,48</td>
+                    </tr>
+                    <tr id="Item + 15">
+                      <td class="NFCDetalhe_Item" align="left" style="width: 60px;">6140</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 300px;">FLICS BLISTER HORTELA 17G</td>
+                      <td class="NFCDetalhe_Item" align="center" style="width: 50px;">1</td>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 10px;">UN</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">1,48</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">1,48</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td class="borda-pontilhada-botton">
+                  <table class="NFCCabecalho" border="0">
+                    <tr>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 410px;">Valor total R$</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">129,20</td>
+                    </tr>
+                    <tr>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 410px;">Valor descontos R$</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">0,00</td>
+                    </tr>
+                    <tr>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 410px;">FORMA PAGAMENTO</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 120px;">VALOR PAGO R$</td>
+                    </tr>
+                    <tr>
+                      <td class="NFCDetalhe_Item" align="left" style="width: 410px;">Cartão de Crédito</td>
+                      <td class="NFCDetalhe_Item" align="right" style="width: 70px;">129,20</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td class="borda-pontilhada-botton NFCDetalhe_Item " align="right" style="FONT-FAMILY: Verdana, Arial, Helvetica, sans-serif; FONT-SIZE: 10px;"><strong>Versão XSLT: 1.10</strong></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+                </td>
+            </tr>
+        </table>
+        </div>
+        <table>
+        <tr>
+            <td style="padding-bottom:10px" align="left">
+            
+             
+            <input type="button" class="button" value="Imprimir DANFE NFC-e" onclick="imprimirNFe();" />
+            <input type="button" class="button" value="Visualizar em Abas" onclick="visualizarAbas();" />
+             
+            <input type="button" class="button" value="Nova Consulta" onclick="novaConsulta();" />
+            </td>
+        </tr>            
+        <tr>
+            <td align="left" style="padding-left:23px">
+                <table>
+                    
+                    <tr>
+                        <td width="200">
+                            <b>Administração Tributária:</b>
+                        </td>
+                        <td>
+                            &nbsp;Receita Estadual RS
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <b>Data/Hora da Consulta:</b>
+                        </td>
+                        <td>
+                            &nbsp;14/10/2026&nbsp;09:13:12
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr> 
+        </table>
+    <script type="text/javascript" src="../../include/AAE_fim.js"></script>
+</body>
+</html>
