@@ -11,11 +11,13 @@ scrapes the returned HTML page for the issuing company, total paid value, and li
 The end goal is a Claude Code **skill**: the user invokes it with several DANFE keys, the skill
 calls this CLI once with all of them, and the CLI returns a JSON result per key.
 
-All source lives in [cli/](cli/). There is no repository-level package; run commands from `cli/`.
+All source lives in [cli/](cli/). There is no repository-level package; run build commands from
+`cli/`. The skill itself is [.claude/skills/notas-fiscais/SKILL.md](.claude/skills/notas-fiscais/SKILL.md)
+(invoked as `/notas-fiscais`); the root `skill.md` is only a pointer to it.
 
 ## Read this first
 
-The project is in the planning stage and [docs/](docs/) is the plan of record. Before changing
+[docs/](docs/) is the plan of record. Before changing
 anything, read [docs/README.md](docs/README.md) and
 [docs/contrato-io.md](docs/contrato-io.md) — the latter is the I/O contract that both the CLI and
 the skill are built against (argv input, PascalCase JSON envelope on stdout, logs on stderr,
@@ -30,44 +32,71 @@ deterministic scraper and its JSON has no category field. The taxonomy is a clos
 [docs/analise-financeira.md](docs/analise-financeira.md); read it before touching anything about
 categories or analysis.
 
-Current code predates the contract and does not implement it yet.
+Stages 1-3 are done: the CLI implements the contract and the skill is written. Stage 4 (the Jest
+suite) has not been started — see [docs/etapa-4-testes.md](docs/etapa-4-testes.md).
 
 ## Commands
-
-No npm scripts are defined beyond the placeholder `test`. Use the toolchain directly:
 
 ```bash
 cd cli
 npm install
-npx tsc              # compile src/ -> dist/ (rootDir/outDir from tsconfig.json)
-npx tsc --watch
-node dist/index.js   # run; the DANFE key is currently hardcoded in src/index.ts
+npm run build          # tsc: src/ -> dist/
+npm run build:watch
 ```
 
-There is no test runner, linter, or formatter configured. `npm test` intentionally exits 1.
+Run it from the **repository root**, the way the skill does:
+
+```bash
+node cli/dist/index.js <chave44> [<chave44> ...]
+```
+
+`npm test` points at `jest`, which is not installed yet (stage 4), so it currently fails on the
+missing dependency. There is no linter or formatter. To exercise the CLI without touching the live
+SEFAZ, point `SEFAZ_URL` at a local server that reads `chaveNFe` from the form body and replies with
+the matching file from [cli/test/fixtures/](cli/test/fixtures/) — that is also what stage 4 will
+automate.
 
 ## Architecture
 
-Entry point [cli/src/index.ts](cli/src/index.ts) instantiates `ExtractNfeData` and calls `run(danfe)`.
+The pipeline is argv → validate → fetch → extract → envelope, and each step is its own module so
+that stage 4 can test them apart:
 
-`ExtractNfeData.run()` ([cli/src/ExtractNfeData/ExtractNfeData.ts](cli/src/ExtractNfeData/ExtractNfeData.ts))
-is the orchestrator and the only place that touches the network or validation:
+| Module | Responsibility |
+|--------|----------------|
+| [index.ts](cli/src/index.ts) | argv, `dotenv`, usage/exit 1, the program's only stdout write |
+| [BatchRunner.ts](cli/src/BatchRunner.ts) | dedupe, concurrency, envelope, per-key failure isolation |
+| [ExtractNfeData.ts](cli/src/ExtractNfeData/ExtractNfeData.ts) | orchestrates one key; `run` never throws |
+| [SefazClient.ts](cli/src/SefazClient.ts) | POST, timeout, one retry, byte decoding |
+| [schema.ts](cli/src/schema.ts) | Joi key schema + mapping to the contract's error codes |
+| [types.ts](cli/src/types.ts) | the contract types — these *are* the serialized shape |
 
-1. `getDanfeData` — `axios.post` of `chaveNFe` + `HML=false` as `application/x-www-form-urlencoded`
-   to `SAT-WEB-NFE-NFC_2.asp`, returning the raw HTML string.
-2. `isDanfeValid` — rejects keys whose length is not 44, and detects the SEFAZ "inexistente na base
-   de dados" sentinel string in the response body.
-3. Parses once with `dom-parser`'s `parseFromString`, then delegates to the two extractor classes.
+Two invariants worth not breaking:
 
-The return type is a discriminated union on `Valid` (`DanfeData | DanfeError`), so callers must
-narrow on `Valid` before reading `Company`/`Value`/`Items`.
+- **`ExtractNfeData.run` must never throw.** `BatchRunner` isolates failures as a second line of
+  defense, but the design is that every failure becomes a `Valid: false` item with an `Error.Code`
+  (D4). An exception escaping here would cost the whole batch over one key.
+- **Validation precedes the network.** `validateDanfe` runs before any request, which is contract
+  guarantee 5. The previous code validated *after* the `await`.
+
+`Config` ([config.ts](cli/src/config.ts)) exposes `SefazUrl`, `TimeoutMs` and `Concurrency` as
+**getters**, not constants: the value is resolved at use, so it does not depend on when `dotenv`
+ran and tests can swap `SEFAZ_URL` between cases.
+
+Shared text/number handling lives in [text.ts](cli/src/text.ts) (`cleanText` — HTML entities plus
+whitespace collapsing) and [number.ts](cli/src/number.ts) (`parsePtBrNumber`). Any new scraped
+field goes through them; the pt-BR conversion in particular must stay centralized, because
+`"1.234.567,89".replace(".", "")` only replaces the first separator and yields `NaN`.
 
 ### HTML scraping approach
 
-`dom-parser` has no CSS-selector or tree-traversal API, so both extractors work around it by
+`dom-parser` has no CSS-selector or tree-traversal API, so the extractors work around it by
 splitting `dom.rawHTML` on newlines, locating the region of interest by regex/substring, and
 re-parsing that slice with `parseFromString`. Keep this pattern in mind before "fixing" the
 line-based code — it is deliberate, not an oversight.
+
+`getElementsByClassName` does match whole class tokens (`NFCCabecalho_SubTitulo` does not match
+`NFCCabecalho_SubTitulo1`, and does match `"NFCCabecalho_SubTitulo NFCBold"`), so class lookups are
+safe; it is the *index* into the result that is not.
 
 - [GetDanfeValue.ts](cli/src/ExtractNfeData/GetDanfeValue.ts) — finds the line containing
   `FORMA PAGAMENTO`, walks outward to the enclosing `<table>`/`</table>` lines, re-parses that
@@ -77,16 +106,32 @@ line-based code — it is deliberate, not an oversight.
   to collect element ids, looks each up via `getElementById`, then maps the item's `<td>` cells by
   **positional index** (1=Description, 2=Quantity, 3=UN, 4=UnityValue, 5=TotalValue). Column order
   changes in the SEFAZ page break this silently.
+- [GetDanfeDate.ts](cli/src/ExtractNfeData/GetDanfeDate.ts) and
+  [GetDanfeCompany.ts](cli/src/ExtractNfeData/GetDanfeCompany.ts) — single fields, both of which
+  throw when absent so the orchestrator can turn that into `PARSE_ERROR`.
 
-Both extractors convert pt-BR numeric strings to numbers by stripping `.` thousands separators and
-swapping `,` for `.`. Any new numeric field needs the same treatment.
+### Three traps already paid for
 
-### Known inconsistency
+These were found against the real fixtures and are easy to reintroduce:
 
-[cli/src/types.ts](cli/src/types.ts) declares a `CliTypes` namespace (`Result`, `NfItem` with
-`Name`/`UnitaryValue`) that nothing imports. The types actually in use are `DanfeData` / `NfeItem`
-exported from `ExtractNfeData.ts`, which use different field names. Prefer the `ExtractNfeData.ts`
-types; `types.ts` is stale and a candidate for removal or reconciliation.
+- **CRLF vs `.`** — JavaScript's `.` does not match carriage return. The item id was read with
+  `/.*id="(.*)".*/`, which left the trailing CR glued to the captured id, so `getElementById` never
+  found the row and every valid note became `PARSE_ERROR`. Any new line-based regex over `rawHTML`
+  has to account for the CR.
+- **`Data de Emissão` vs `Data/Hora da Consulta`** — the page carries both, and the consultation
+  timestamp appears *earlier* in the HTML (inside a JavaScript string). Anchor on the literal
+  `Data de Emissão`, and note that the emission date sits in the same
+  `NFCCabecalho_SubTitulo` class that `Company` reads at index `[0]`, so positional indexing cannot
+  tell them apart. The ISO string is built by string concatenation on purpose: `new Date()` would
+  apply the machine's timezone and shift the time printed on the note.
+- **Not found is HTTP 200** — the SEFAZ answers a missing note with a normal page whose `<script>`
+  holds `alert('M230 - Documento Fiscal (NFC-e) inexistente ...')`. There is no error status to
+  detect, so detection is by body sentinel, and the retry logic must not treat it as transient.
+
+Charset is decided from the bytes, not the declaration ([decode.ts](cli/src/decode.ts)): the page
+declares `iso-8859-1` while the saved fixtures are valid UTF-8, so a strict UTF-8 attempt with a
+latin-1 fallback is what handles both. This path has been tested with hand-built bytes but **not
+yet against the live endpoint**.
 
 ## Notes
 
@@ -96,5 +141,13 @@ types; `types.ts` is stale and a candidate for removal or reconciliation.
   (`noUnusedLocals`, `noImplicitReturns`, …) are commented out rather than deleted.
 - Only SEFAZ-RS is supported. The first 2 digits of a DANFE key are the UF code (`43` = RS); keys
   from other states must be rejected before any request, not sent to the RS endpoint.
-- The scraper depends on a third-party government HTML page. Breakage is most likely to surface as a
-  thrown "Linha pai não encontrada!" / "Item com id ... não encontrado", or as zeroed numbers.
+- The scraper depends on a third-party government HTML page. Breakage now surfaces as
+  `PARSE_ERROR` with the thrown message in `Error.Message` ("Linha pai não encontrada!", "Item com
+  id ... não encontrado", "Data de emissão não encontrada na página") rather than as a crash.
+- Do **not** add `"type": "module"` to `cli/package.json`. With `module: nodenext` and no such
+  field, TypeScript emits CommonJS, which is what keeps the stage-4 Jest setup trivial (and what
+  `__dirname` in [index.ts](cli/src/index.ts) relies on).
+- `dotenv.config({ quiet: true })` in [index.ts](cli/src/index.ts) is load-bearing, not cosmetic:
+  without `quiet` dotenv writes a banner to **stdout**, which the contract reserves for the JSON
+  alone. For the same reason `index.ts` sets `process.exitCode` instead of calling `process.exit`,
+  which can truncate a piped stdout.

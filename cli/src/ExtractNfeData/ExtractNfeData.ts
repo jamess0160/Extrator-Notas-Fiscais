@@ -1,87 +1,81 @@
-import axios from "axios";
-import { parseFromString } from 'dom-parser';
-import { ExtractItems } from "./ExtractItems";
-import { GetDanfeValue } from "./GetDanfeValue";
+import { parseFromString } from "dom-parser"
+import { failure } from "../errors"
+import { validateDanfe } from "../schema"
+import { SefazClient, SefazFetchError } from "../SefazClient"
+import type { DanfeResult } from "../types"
+import { ExtractItems } from "./ExtractItems"
+import { GetDanfeCompany } from "./GetDanfeCompany"
+import { GetDanfeDate } from "./GetDanfeDate"
+import { GetDanfeValue } from "./GetDanfeValue"
+
+/**
+ * O SEFAZ responde **200 com uma página normal** quando a nota não existe; o aviso vive dentro de
+ * um `alert()` JavaScript, junto do código `M230`. Não há status HTTP para detectar, daí a busca
+ * pelo sentinel no corpo. Os dois são checados porque nenhum deles é documentado oficialmente.
+ */
+const NOT_FOUND_SENTINELS = [
+    "Documento Fiscal (NFC-e) inexistente na base de dados da SEFAZ",
+    "M230 - Documento Fiscal",
+]
 
 export class ExtractNfeData {
 
     private readonly ExtractItems = new ExtractItems()
     private readonly GetDanfeValue = new GetDanfeValue()
+    private readonly GetDanfeDate = new GetDanfeDate()
+    private readonly GetDanfeCompany = new GetDanfeCompany()
 
-    public async run(danfe: string): Promise<DanfeDataResult> {
+    public constructor(private readonly client: SefazClient = new SefazClient()) { }
 
-        let danfeData = await this.getDanfeData(danfe)
+    /**
+     * Consulta uma chave e devolve o item de `Results` do contrato.
+     *
+     * Nunca lança: toda falha vira `Valid: false` com um `Error.Code`, porque uma exceção aqui
+     * abortaria o lote inteiro por causa de uma chave (D4).
+     */
+    public async run(danfe: string): Promise<DanfeResult> {
+        // Antes de qualquer rede: chave malformada não gera requisição (garantia 5 do contrato).
+        const formatError = validateDanfe(danfe)
 
-        let { Valid, Message } = this.isDanfeValid(danfe, danfeData)
-
-        if (Valid === false && Message) {
-            return { Valid, Message }
+        if (formatError) {
+            return failure(danfe, formatError)
         }
 
-        let dom = parseFromString(danfeData)
+        let page: string
 
-        return {
-            Valid: true,
-            Company: dom.getElementsByClassName("NFCCabecalho_SubTitulo")[0]?.innerHTML,
-            Value: this.GetDanfeValue.run(dom),
-            Items: this.ExtractItems.run(dom)
+        try {
+            page = await this.client.fetchPage(danfe)
+        } catch (error) {
+            const detail = error instanceof SefazFetchError ? error.message : String(error)
+            return failure(danfe, "FETCH_ERROR", detail)
         }
+
+        return this.extract(danfe, page)
     }
 
-    private async getDanfeData(danfe: string) {
+    /**
+     * Interpreta uma página já obtida. Separado de `run` para que a extração seja testável com
+     * fixture, sem rede.
+     */
+    public extract(danfe: string, page: string): DanfeResult {
+        if (NOT_FOUND_SENTINELS.some((sentinel) => page.includes(sentinel))) {
+            return failure(danfe, "NOT_FOUND")
+        }
 
-        let formData = new URLSearchParams({
-            HML: "false",
-            chaveNFe: danfe,
-        })
+        try {
+            const dom = parseFromString(page)
 
-        let { data } = await axios.post<string>("https://www.sefaz.rs.gov.br/ASP/AAE_ROOT/NFE/SAT-WEB-NFE-NFC_2.asp", formData, {
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            }
-        })
-
-        return data
-    }
-
-    private isDanfeValid(danfe: string, danfeData: string) {
-        if (danfe.length !== 44) {
             return {
-                Valid: false,
-                Message: "Código DANFE inválido"
+                Danfe: danfe,
+                Valid: true,
+                Company: this.GetDanfeCompany.run(dom),
+                Date: this.GetDanfeDate.run(dom),
+                Value: this.GetDanfeValue.run(dom),
+                Items: this.ExtractItems.run(dom),
             }
+        } catch (error) {
+            const detail = error instanceof Error ? error.message : String(error)
+            return failure(danfe, "PARSE_ERROR", detail)
         }
-
-        if (danfeData.includes("Documento Fiscal (NFC-e) inexistente na base de dados da SEFAZ")) {
-            return {
-                Valid: false,
-                Message: "DANFE não encontrada"
-            }
-        }
-
-        return { Valid: true }
     }
 }
-
-export interface DanfeData {
-    Valid: true
-    Company: string
-    Value: number
-    Items: NfeItem[]
-}
-
-interface NfeItem {
-    Description: string
-    Quantity: number
-    UN: string
-    UnityValue: number
-    TotalValue: number
-}
-
-
-interface DanfeError {
-    Valid: false,
-    Message: string
-}
-
-type DanfeDataResult = DanfeData | DanfeError

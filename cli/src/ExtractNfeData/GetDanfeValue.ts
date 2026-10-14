@@ -1,4 +1,5 @@
 import { Dom, parseFromString } from "dom-parser";
+import { parsePtBrNumber } from "../number";
 
 export class GetDanfeValue {
 
@@ -25,12 +26,18 @@ export class GetDanfeValue {
 
         let paymentChilds = childs.slice(paymentIndex + 1, childs.length)
 
+        // O total vem da **soma das linhas de pagamento**, não de um campo "total" da página:
+        // uma nota com cartão + dinheiro tem o valor repartido entre as linhas.
         return paymentChilds.reduce((old, item) => {
 
             let nodes = item.getElementsByTagName("td")
             let valueNode = nodes[1]
 
-            return old + Number(valueNode.innerHTML.replace(".", "").replace(",", "."))
+            if (!valueNode) {
+                throw new Error("Linha de pagamento sem coluna de valor")
+            }
+
+            return old + parsePtBrNumber(valueNode.innerHTML)
         }, 0)
     }
 

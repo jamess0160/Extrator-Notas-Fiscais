@@ -1,10 +1,13 @@
 {
   "name": "cli",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "CLI de consulta de NFC-e do RS pela chave de acesso DANFE",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +18,8 @@
   },
   "dependencies": {
     "axios": "^1.20.0",
-    "dom-parser": "^1.1.5"
+    "dom-parser": "^1.1.5",
+    "dotenv": "^18.0.7",
+    "joi": "^18.2.9"
   }
 }

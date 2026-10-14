@@ -148,11 +148,31 @@ não cobrem o caminho latin-1. Ver tarefa 2.3.
 
 ## Definição de pronto
 
-- [ ] `node dist/index.js <chave-valida>` imprime o JSON do contrato em stdout, com `Date`
-- [ ] `node dist/index.js <valida> <inexistente> <outra-uf>` retorna 3 itens, exit `0`
-- [ ] `node dist/index.js` sem argumentos → uso no stderr, exit `1`
-- [ ] stdout parseável com `JSON.parse` em todos os casos de exit `0`
-- [ ] os três erros de formato saem do schema Joi com `Code` distinto e correto
-- [ ] nenhuma requisição disparada para chave inválida por formato/tamanho/UF
-- [ ] CLI funciona sem `.env` presente
-- [ ] `npx tsc` sem erro sob o `strict` atual
+- [x] `node dist/index.js <chave-valida>` imprime o JSON do contrato em stdout, com `Date`
+- [x] `node dist/index.js <valida> <inexistente> <outra-uf>` retorna 3 itens, exit `0`
+- [x] `node dist/index.js` sem argumentos → uso no stderr, exit `1`
+- [x] stdout parseável com `JSON.parse` em todos os casos de exit `0`
+- [x] os três erros de formato saem do schema Joi com `Code` distinto e correto
+- [x] nenhuma requisição disparada para chave inválida por formato/tamanho/UF
+- [x] CLI funciona sem `.env` presente
+- [x] `npx tsc` sem erro sob o `strict` atual
+
+Verificado contra as 6 fixtures servidas por um servidor HTTP local: 5 notas extraídas com empresa,
+data, valor e itens corretos, a inexistente como `NOT_FOUND`, os três erros de formato sem gerar
+requisição, duplicata deduplicada, HTTP 500 com um retry e `FETCH_ERROR`, pico de 3 requisições
+simultâneas. A suíte automatizada é a [etapa 4](etapa-4-testes.md).
+
+## Encontrado na implementação: os extratores estavam quebrados em CRLF
+
+`ExtractItems` lia o id do item com `/.*id="(.*)".*/`. Em JavaScript o `.` não casa carriage
+return, e as páginas usam CRLF: o id capturado saía como `Item + 1`, e o `getElementById`
+seguinte nunca encontrava o item — toda nota válida virava `PARSE_ERROR`. Corrigido com
+`/id="([^"]+)"/`.
+
+Dois ajustes vizinhos, pela mesma razão (o `dom-parser` devolve HTML cru):
+
+- entidades HTML não eram resolvidas, então `C &amp; A Comercio de Alimentos Ltda.` ia para o JSON
+  com a entidade literal. Resolvido em `cleanText` ([text.ts](../cli/src/text.ts)), aplicado a
+  `Company`, `Description` e `UN`;
+- a conversão pt-BR trocava apenas a *primeira* ocorrência do separador de milhar, então
+  `1.234.567,89` virava `NaN`. Centralizada em `parsePtBrNumber` ([number.ts](../cli/src/number.ts)).

@@ -1,6 +1,8 @@
 # Etapa 3 — Desenvolvimento da Skill
 
-Preenche o [skill.md](../skill.md) (hoje vazio). Depende do [contrato de I/O](contrato-io.md) e da
+Escreve a skill em [.claude/skills/notas-fiscais/SKILL.md](../.claude/skills/notas-fiscais/SKILL.md)
+— é de lá que o Claude Code carrega skills e as expõe como `/notas-fiscais`; o `skill.md` da raiz
+ficou como ponteiro, para o conteúdo não viver duplicado. Depende do [contrato de I/O](contrato-io.md) e da
 [especificação de análise](analise-financeira.md), não do código da CLI — pode ser escrita em
 paralelo com a etapa 2.
 
@@ -86,6 +88,10 @@ Ordem: resumo → tabela por categoria → notas → destaques.
 - Nunca inventar valor, item ou categoria que não veio da CLI.
 
 ## Definição de pronto
+
+Instruções escritas (todas as linhas abaixo estão cobertas pelo SKILL.md); o que falta é a
+validação em uso, que é a [etapa 4.6](etapa-4-testes.md) — por ser comportamento de LLM, essa
+verificação é manual.
 
 - [ ] skill acionada por pedido em linguagem natural com uma ou mais chaves
 - [ ] chaves em formatos variados (corridas, espaçadas, uma por linha) reconhecidas
