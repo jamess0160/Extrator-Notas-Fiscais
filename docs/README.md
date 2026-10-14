@@ -5,8 +5,13 @@ skill chama a CLI deste repositório uma única vez com todos os códigos, e a C
 com o resultado de cada um.
 
 ```
-usuário → /skill <chave1> <chave2> ...  →  skill.md  →  node cli/dist/index.js <chaves...>  →  JSON
+usuário → /skill <chave1> <chave2> ...
+            → skill.md → node cli/dist/index.js <chaves...> → JSON (dados brutos)
+            → skill categoriza os itens e produz a análise financeira → resposta ao usuário
 ```
+
+A CLI entrega dados; a skill entrega leitura dos dados. A categorização de itens e a análise são da
+skill, não da CLI (D10) — especificadas em [analise-financeira.md](analise-financeira.md).
 
 ## Etapas
 
@@ -17,9 +22,11 @@ usuário → /skill <chave1> <chave2> ...  →  skill.md  →  node cli/dist/ind
 | 3 | Desenvolvimento da Skill | [etapa-3-skill.md](etapa-3-skill.md) | não iniciada |
 | 4 | Testes e validações | [etapa-4-testes.md](etapa-4-testes.md) | não iniciada |
 
-O produto da etapa 1 é o [contrato de I/O](contrato-io.md) — o documento que as etapas 2 e 3
-consomem. Enquanto ele estiver fechado, CLI e Skill podem ser desenvolvidas em paralelo, porque
-nenhuma das duas precisa ler o código da outra.
+Os produtos da etapa 1 são dois documentos de especificação:
+[contrato de I/O](contrato-io.md), consumido pelas etapas 2 e 3, e
+[análise financeira](analise-financeira.md), consumida pela etapa 3. Enquanto os dois estiverem
+fechados, CLI e Skill podem ser desenvolvidas em paralelo, porque nenhuma precisa ler o código da
+outra.
 
 ## Estado atual do repositório
 
@@ -29,4 +36,9 @@ nenhuma das duas precisa ler o código da outra.
 - `ExtractNfeData.run()` aceita **um** código por chamada e o código de exemplo está fixo em
   [index.ts](../cli/src/index.ts). Não há leitura de `argv`, nem saída JSON, nem lote.
 - [skill.md](../skill.md) está vazio.
-- Não há testes, build script, linter nem fixtures.
+- [cli/src/schema.ts](../cli/src/schema.ts) existe, mas contém apenas o namespace `Schemas` vazio —
+  os schemas Joi ainda precisam ser escritos (D8).
+- As fixtures de HTML **já estão** em [cli/test/fixtures/](../cli/test/fixtures/), nomeadas pela
+  chave DANFE: 6 arquivos, todos do RS — 5 notas válidas (de 1 a 22 itens, supermercado e farmácia)
+  e 1 de nota inexistente.
+- Não há testes, build script nem linter. `joi`, `dotenv` e `jest` ainda não estão instalados.

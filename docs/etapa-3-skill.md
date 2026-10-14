@@ -1,23 +1,28 @@
 # Etapa 3 — Desenvolvimento da Skill
 
-Preenche o [skill.md](../skill.md) (hoje vazio). Depende do [contrato de I/O](contrato-io.md), não
-do código da CLI — pode ser escrita em paralelo com a etapa 2.
+Preenche o [skill.md](../skill.md) (hoje vazio). Depende do [contrato de I/O](contrato-io.md) e da
+[especificação de análise](analise-financeira.md), não do código da CLI — pode ser escrita em
+paralelo com a etapa 2.
 
 ## Responsabilidades
 
-A skill é uma camada fina. Ela **não** valida chaves, **não** chama o SEFAZ e **não** interpreta
-HTML — tudo isso é da CLI. O que ela faz:
+A skill é fina na parte de dados e espessa na de interpretação. Ela **não** valida chaves, **não**
+chama o SEFAZ e **não** interpreta HTML — isso é da CLI. O que ela faz:
 
 1. extrair as chaves DANFE da mensagem do usuário;
 2. garantir que a CLI está compilada, avisando quando for a primeira execução;
 3. invocar a CLI com as chaves;
-4. apresentar o resultado de forma legível.
+4. **categorizar os itens e produzir a análise financeira** (D10);
+5. apresentar o resultado.
+
+O passo 4 é o valor do produto: a CLI entrega dados, a skill entrega leitura dos dados.
 
 ## Tarefas
 
 ### 3.1 — Frontmatter
 `name` e `description`. A `description` é o que decide se a skill é acionada, então precisa conter
-os termos reais de uso: nota fiscal, NFC-e, DANFE, chave de acesso, consultar nota, cupom fiscal.
+os termos reais de uso: nota fiscal, NFC-e, DANFE, chave de acesso, consultar nota, cupom fiscal —
+e também os de análise: gastos, quanto gastei, análise de compras, categorias de gasto.
 
 ### 3.2 — Extração das chaves
 Chaves DANFE aparecem de formas variadas: 44 dígitos corridos, em grupos de 4 separados por espaço,
@@ -57,13 +62,28 @@ node cli/dist/index.js <chave1> <chave2> ...
 - `exit 0` → `JSON.parse` do stdout.
 - `exit 1` → tratar como falha da ferramenta e mostrar o stderr; não tentar adivinhar o resultado.
 
-### 3.5 — Apresentação
-- Uma linha ou tabela por nota: empresa, valor total, quantidade de itens.
+### 3.5 — Categorização e análise
+Seguir [analise-financeira.md](analise-financeira.md). Em resumo:
+
+- cada item recebe uma categoria da **lista fechada** daquele documento — não inventar categorias
+  novas, senão nada é comparável entre execuções;
+- `Outros` é resposta válida; chutar é pior;
+- totais por categoria somam `Items[].TotalValue`; o total da nota é `Value`. **Os dois divergem**
+  em dados reais (desconto), e a divergência é reportada, não escondida;
+- apenas notas com `Valid: true` entram na análise.
+
+### 3.6 — Apresentação
+Ordem: resumo → tabela por categoria → notas → destaques.
+
+- Resumo: período, nº de notas, valor total, ticket médio.
+- Tabela por categoria ordenada por valor — é o que o usuário veio ver.
+- Uma linha por nota: empresa, data de emissão, valor pago, nº de itens.
+- `Date` chega em ISO 8601; formatar para pt-BR (`31/10/2025 12:56`) na apresentação.
 - Itens detalhados quando for uma única nota, ou quando o usuário pedir.
-- As chaves com `Valid: false` **sempre aparecem**, com a `Message` do erro. Uma nota que falhou
-  silenciosamente é pior que um erro visível.
-- Com `Failed > 0`, deixar o resumo explícito (ex. `8 de 10 consultadas; 2 falharam`).
-- Nunca inventar valor de nota que não voltou da CLI.
+- As chaves com `Valid: false` **sempre aparecem**, com a `Message` do erro, e a análise diz
+  explicitamente que não as cobre. Uma nota que falhou silenciosamente é pior que um erro visível.
+- Com `Failed > 0`, resumo explícito (ex. `8 de 10 consultadas; 2 falharam`).
+- Nunca inventar valor, item ou categoria que não veio da CLI.
 
 ## Definição de pronto
 
@@ -74,3 +94,6 @@ node cli/dist/index.js <chave1> <chave2> ...
 - [ ] falha de setup distinguível de falha de consulta na mensagem ao usuário
 - [ ] lote > 150 chaves dividido corretamente, com resultados somados
 - [ ] chaves com erro reportadas, nunca omitidas
+- [ ] todo item classificado em categoria da lista fechada
+- [ ] divergência item-vs-pago reportada quando existir
+- [ ] análise declara quando é parcial

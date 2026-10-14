@@ -39,8 +39,9 @@ depuração que escape para o stdout quebra a skill. Logs vão para `console.err
     {
       "Danfe": "43251088212113025439650070000203531414448132",
       "Valid": true,
-      "Company": "NOME DA EMPRESA LTDA",
-      "Value": 123.45,
+      "Company": "COMERCIO DE MEDICAMENTOS BRAIR LTDA",
+      "Date": "2025-10-31T12:56:53",
+      "Value": 19.9,
       "Items": [
         {
           "Description": "ARROZ TIPO 1 5KG",
@@ -79,8 +80,15 @@ depuração que escape para o stdout quebra a skill. Logs vão para `console.err
 União discriminada por `Valid`, como o tipo atual do código. Quem consome deve estreitar por
 `Valid` antes de ler os demais campos.
 
-`Valid: true` → `Danfe`, `Company` (string), `Value` (number), `Items` (array).
+`Valid: true` → `Danfe`, `Company` (string), `Date` (string), `Value` (number), `Items` (array).
 `Valid: false` → `Danfe`, `Error` com `Code` e `Message`.
+
+`Date` é a **data de emissão da nota**, em ISO 8601 local (`YYYY-MM-DDTHH:MM:SS`), convertida do
+`DD/MM/YYYY HH:MM:SS` da página. Sem offset de fuso: a página não informa o fuso, e cravar `-03:00`
+seria inventar informação. Quem precisar de fuso deve assumir horário de Brasília por conta própria.
+
+Não confundir com a *data da consulta*, que também aparece na página do SEFAZ e não entra no
+contrato. Ver [etapa 2.4](etapa-2-cli.md) para a armadilha de extração.
 
 `Value` vem da **soma das linhas de pagamento** sob `FORMA PAGAMENTO`, não de um campo "total" da
 página. Valores monetários são `number` já convertidos de pt-BR (`1.234,56` → `1234.56`).

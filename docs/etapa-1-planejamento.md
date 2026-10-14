@@ -61,11 +61,57 @@ como constante no código, sem flag de linha de comando, até existir motivo con
 Chaves duplicadas na entrada geram uma única requisição. O JSON de saída preserva uma entrada por
 chave única, não por ocorrência.
 
+### D7 — URL do SEFAZ em variável de ambiente
+
+A URL do endpoint sai do código e passa a vir de `SEFAZ_URL`, carregada com `dotenv`, tendo o
+endpoint de produção como default — a CLI precisa funcionar sem `.env` na máquina do usuário.
+
+Motivo: é o que permite apontar a suíte de testes para o servidor falso (D9) sem mockar o `axios`.
+
+### D8 — Validação com Joi
+
+Os schemas ficam em [cli/src/schema.ts](../cli/src/schema.ts). Validação de forma da chave apenas
+(tamanho, dígitos, UF); existência da nota depende do SEFAZ e fica fora do schema.
+
+Ponto de atenção: Joi reporta a primeira falha encontrada, e o contrato tem três códigos distintos
+para erro de forma (`INVALID_LENGTH`, `INVALID_FORMAT`, `UNSUPPORTED_UF`). O schema precisa de
+mensagens rotuladas por regra para que o código de erro seja mapeável, e a precedência entre eles
+tem de ser travada em teste.
+
+### D9 — Jest + servidor HTTP falso servindo as fixtures
+
+Testes automatizados com Jest. No lugar de mockar o `axios`, os testes sobem um servidor HTTP local
+que lê `chaveNFe` do corpo da requisição e devolve `cli/test/fixtures/<chave>.html`, com a CLI
+apontada para ele via `SEFAZ_URL` (D7).
+
+Motivo: exercita o caminho HTTP real — form-urlencoded, headers, status, timeout, retry. Um mock de
+`axios` testaria o mock, não o cliente.
+
+As fixtures já estão no repositório; não há etapa de captura. Há fixture para nota inexistente
+(`...7029821903594352`), então o servidor falso serve o caminho `NOT_FOUND` com HTML real em vez de
+sintetizado.
+
+### D10 — A categorização de itens é da skill, não da CLI
+
+A CLI entrega os itens como o SEFAZ os descreve. Categorizar (carnes, frutas, limpeza, …) e analisar
+é responsabilidade da skill, especificada em [analise-financeira.md](analise-financeira.md).
+
+Motivo: as descrições são abreviadas, sem acento, truncadas em ~40 caracteres e cheias de marca
+(`CARNE RESF BOV S/OSSO BIFE COXAO MOLE KG`, `FLICS BLISTER TUTTI-FRUTTI 17G`). Um dicionário de
+palavras-chave na CLI erraria muito — e as fixtures contêm
+`ESPONJA SCOTCH-BRITE NAO RISCA LARANJA 3`, onde `LARANJA` é a cor, não a fruta.
+
+Consequência: a CLI segue determinística e testável sem LLM; a análise é validada à mão (etapa 4.6).
+O contrato de I/O **não ganha campo de categoria**.
+
 ## Riscos registrados
 
 | Risco | Impacto | Mitigação |
 |-------|---------|-----------|
-| O HTML do SEFAZ muda | Quebra silenciosa dos extratores — principalmente `ExtractItems`, que mapeia `<td>` por posição, e pode produzir números zerados em vez de erro | Fixtures capturadas na etapa 2 + validação de sanidade nos valores extraídos (etapa 4) |
+| O HTML do SEFAZ muda | Quebra silenciosa dos extratores — principalmente `ExtractItems`, que mapeia `<td>` por posição, e pode produzir números zerados em vez de erro | Fixtures + validação de sanidade nos valores extraídos (etapa 4) |
+| O sentinel de nota inexistente muda de texto | `NOT_FOUND` deixa de ser detectado e vira `PARSE_ERROR` ou dado vazio | Fixture real `...7029821903594352` + teste real opt-in (etapa 4.5) |
+| **Encoding**: as páginas declaram `charset=iso-8859-1`, mas as fixtures salvas estão em UTF-8 válido | Se o endpoint ao vivo enviar bytes latin-1, `Company` e `Description` saem com acentuação corrompida — e a suíte passa, porque testa as fixtures em UTF-8 | Decodificação explícita na CLI (etapa 2.3) + conferência de acentos no teste real (etapa 4.5) |
+| **Nenhuma fixture discrimina somar vs. pegar a primeira forma de pagamento** | Um bug de "lê só a primeira linha de pagamento" passa verde na suíte | Fixture sintética na etapa 4.1 |
 | Rate limiting / bloqueio do SEFAZ | Lotes grandes falham em massa | D5 (concorrência 3 + retry) e erro `FETCH_ERROR` por chave, sem derrubar o lote |
 | Limite de tamanho do `argv` | Lotes grandes truncados ou erro do shell | D1 — a skill divide em chamadas de até 150 chaves |
 | `npm install` falha na primeira execução | Skill inutilizável, possivelmente com erro confuso | A skill reporta a falha do setup como tal, distinguindo-a de erro de consulta (etapa 3) |
@@ -87,4 +133,8 @@ chave única, não por ocorrência.
 - [x] D4 — semântica de falha parcial
 - [x] D5 — concorrência e timeouts
 - [x] D6 — deduplicação
+- [x] D7 — URL do SEFAZ em ambiente
+- [x] D8 — validação com Joi
+- [x] D9 — Jest + servidor falso de fixtures
+- [x] D10 — categorização na skill
 - [ ] [contrato-io.md](contrato-io.md) revisado e aprovado

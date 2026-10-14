@@ -21,7 +21,14 @@ anything, read [docs/README.md](docs/README.md) and
 the skill are built against (argv input, PascalCase JSON envelope on stdout, logs on stderr,
 error codes, exit codes). Decisions already settled live in
 [docs/etapa-1-planejamento.md](docs/etapa-1-planejamento.md): RS-only scope, build-on-setup with a
-first-run warning, concurrency 3, partial failure never aborts the batch.
+first-run warning, concurrency 3, partial failure never aborts the batch, Joi for key validation
+(schemas in [cli/src/schema.ts](cli/src/schema.ts)), `SEFAZ_URL` from the environment, and Jest
+tests driven by a fake HTTP server that serves [cli/test/fixtures/](cli/test/fixtures/).
+
+Item categorization and financial analysis belong to the **skill**, not the CLI — the CLI stays a
+deterministic scraper and its JSON has no category field. The taxonomy is a closed list in
+[docs/analise-financeira.md](docs/analise-financeira.md); read it before touching anything about
+categories or analysis.
 
 Current code predates the contract and does not implement it yet.
 
