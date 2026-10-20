@@ -53,6 +53,7 @@ execuções diferentes e nada é comparável ao longo do tempo.
 | `Laticínios e frios` | leite, queijo, presunto, iogurte, manteiga | `QUEIJO FRIZZO 300G MUSSARELA FATIADO`, `PRESUNTO COZIDO SADIA SOLTISSIMO 200G` |
 | `Padaria` | pães, massas frescas de padaria, salgados | `PAO FORMA PANITTS 400G DE LEITE`, `PAO DE QUEIJO CAPRICIOSA KG` |
 | `Mercearia e secos` | óleo, azeite, massas, grãos, enlatados, temperos, açúcar, café | `OLEO DE SOJA COAMO 900ML`, `LENTILHA YOKI 400G TP2`, `EXTRATO TOMATE ELEFANTE 300G` |
+| `Alimentos prontos e congelados` | pratos prontos e semiprontos, congelados e empanados, rotisseria | `PIZZA SEARA 250G CALABRESA AIR FRYE`, `LASANHA SADIA 600G  PEITO PERU` |
 | `Doces e snacks` | biscoitos, wafer, chocolate, balas, salgadinhos | `BISCOITO KEIKO 320G GOIABINHA`, `WAFER PANINE 250G CASEIRO`, `FLICS BLISTER HORTELA 17G` |
 | `Bebidas` | água, refrigerante, suco, cerveja, vinho | — (ausente nas fixtures) |
 | `Limpeza` | detergente, sabão, esponja, desinfetante, álcool | `DETERGENTE GIRANDO SOL NEUTRO 500ML`, `ESPONJA SCOTCH-BRITE`, `ALCOOL PRONTO SOCORRO 1L` |
@@ -67,6 +68,12 @@ pratos, não ingredientes: `X-BURGER` não é `Carnes e peixes` nem `Padaria`, e
 não distingue um hambúrguer pronto de carne moída. É o ramo que transforma esse palpite em dedução.
 
 Regras:
+- `Alimentos prontos e congelados` separa pelo **estado do produto**, não pelo ingrediente:
+  `PIZZA SEARA 250G CALABRESA AIR FRYE` e `LASANHA SADIA 600G  PEITO PERU` não são `Padaria` nem
+  `Carnes e peixes` — estas duas ficam com o cru e o fresco. Comprado congelado ou pronto para
+  esquentar é esta categoria; servido no estabelecimento é `Refeição fora de casa`, que continua
+  dependendo do `Segment`. E o `PRONTO` pode ser marca: `ALCOOL PRONTO SOCORRO 1L` é `Limpeza`,
+  mesma armadilha do `LARANJA` da esponja.
 - `Outros` é resposta legítima. Chutar categoria é pior que admitir incerteza, porque contamina o
   agregado sem deixar rastro.
 - Se `Outros` passar de ~10% do valor total, dizer isso ao usuário — é sinal de que a análise está

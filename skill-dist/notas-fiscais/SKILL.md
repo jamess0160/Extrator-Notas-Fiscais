@@ -202,6 +202,7 @@ a mesma nota recebe categorias diferentes em execuções diferentes e nada é co
 | `Laticínios e frios` | leite, queijo, presunto, iogurte, manteiga |
 | `Padaria` | pães, massas frescas de padaria, salgados |
 | `Mercearia e secos` | óleo, azeite, massas, grãos, enlatados, temperos, açúcar, café |
+| `Alimentos prontos e congelados` | pratos prontos e semiprontos, congelados e empanados: pizza, lasanha, nuggets, empanado, hambúrguer congelado, batata frita congelada, rotisseria |
 | `Doces e snacks` | biscoitos, wafer, chocolate, balas, salgadinhos |
 | `Bebidas` | água, refrigerante, suco, cerveja, vinho |
 | `Limpeza` | detergente, sabão, esponja, desinfetante, álcool |
@@ -216,6 +217,12 @@ As descrições são abreviadas, sem acento, truncadas em ~40 caracteres e domin
 produto inteiro antes de decidir — `ESPONJA SCOTCH-BRITE NAO RISCA LARANJA 3` é `Limpeza`, e
 `LARANJA` ali é a cor da esponja, não uma fruta.
 
+- `Alimentos prontos e congelados` vale pelo **estado do produto**, não pelo ingrediente: `PIZZA
+  SEARA 250G CALABRESA AIR FRYE` e `LASANHA SADIA 600G PEITO PERU` entram aqui, não em `Padaria`
+  nem em `Carnes e peixes`, que ficam com o cru/fresco (`CARNE MOIDA I RESF BOV KG`,
+  `PAO FORMA PANITTS 400G`). Comprado congelado ou pronto para esquentar é esta categoria;
+  servido no estabelecimento é `Refeição fora de casa`. Cuidado com o `PRONTO` de marca:
+  `ALCOOL PRONTO SOCORRO 1L` é `Limpeza`.
 - `Outros` é resposta legítima. Chutar é pior: contamina o agregado sem deixar rastro.
 - Se `Outros` passar de ~10% do valor, diga isso — a análise está cega para uma parte relevante.
 - Categorize pelo **produto**, não pelo estabelecimento: farmácia vende chocolate e supermercado
